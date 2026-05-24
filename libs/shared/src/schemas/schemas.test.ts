@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { MappingConfigSchema, parseMappingConfig, parsePortswitchConfig } from './config.schema';
+import { GroupConfigSchema, MappingConfigSchema, PortswitchConfigSchema, parseMappingConfig, parsePortswitchConfig } from './config.schema';
 import {
   HealthResponseSchema,
   MappingStatsSchema,
+  CreateGroupRequestSchema,
+  PatchGroupRequestSchema,
+  CreateMappingRequestSchema,
   parseCreateMappingRequest,
   parsePatchMappingRequest,
   parseBulkRequest,
@@ -20,6 +23,7 @@ const validMapping = {
   targetPort: 3000,
   enabled: true,
   drainTimeoutMs: 30000,
+  groupId: '01HTEST',
   createdAt: '2026-05-21T10:00:00.000Z',
   updatedAt: '2026-05-21T10:34:12.512Z',
 };
@@ -27,6 +31,7 @@ const validMapping = {
 const validConfig = {
   schemaVersion: 1,
   daemon: { port: 47600, logRetention: { maxFiles: 10, maxFileBytes: 5242880 } },
+  groups: [],
   mappings: [validMapping],
 };
 
@@ -111,7 +116,7 @@ describe('PortswitchConfigSchema', () => {
 describe('CreateMappingRequestSchema', () => {
   it('parses required fields only', () => {
     expect(() =>
-      parseCreateMappingRequest({ sourcePort: 8080, targetHost: 'localhost', targetPort: 3000 }),
+      parseCreateMappingRequest({ sourcePort: 8080, targetHost: 'localhost', targetPort: 3000, groupId: '01HTEST' }),
     ).not.toThrow();
   });
 
@@ -124,29 +129,30 @@ describe('CreateMappingRequestSchema', () => {
         targetHost: 'localhost',
         targetPort: 3000,
         enabled: false,
+        groupId: '01HTEST',
       }),
     ).not.toThrow();
   });
 
   it('rejects missing sourcePort', () => {
     expect(() =>
-      parseCreateMappingRequest({ targetHost: 'localhost', targetPort: 3000 }),
+      parseCreateMappingRequest({ targetHost: 'localhost', targetPort: 3000, groupId: '01HTEST' }),
     ).toThrow();
   });
 
   it('rejects missing targetHost', () => {
-    expect(() => parseCreateMappingRequest({ sourcePort: 8080, targetPort: 3000 })).toThrow();
+    expect(() => parseCreateMappingRequest({ sourcePort: 8080, targetPort: 3000, groupId: '01HTEST' })).toThrow();
   });
 
   it('rejects empty targetHost', () => {
     expect(() =>
-      parseCreateMappingRequest({ sourcePort: 8080, targetHost: '', targetPort: 3000 }),
+      parseCreateMappingRequest({ sourcePort: 8080, targetHost: '', targetPort: 3000, groupId: '01HTEST' }),
     ).toThrow();
   });
 
   it('rejects out-of-range port', () => {
     expect(() =>
-      parseCreateMappingRequest({ sourcePort: 99999, targetHost: 'localhost', targetPort: 3000 }),
+      parseCreateMappingRequest({ sourcePort: 99999, targetHost: 'localhost', targetPort: 3000, groupId: '01HTEST' }),
     ).toThrow();
   });
 });
@@ -178,7 +184,7 @@ describe('BulkRequestSchema', () => {
     expect(() =>
       parseBulkRequest({
         operations: [
-          { op: 'create', mapping: { sourcePort: 8080, targetHost: 'localhost', targetPort: 3000 } },
+          { op: 'create', mapping: { sourcePort: 8080, targetHost: 'localhost', targetPort: 3000, groupId: '01HTEST' } },
         ],
       }),
     ).not.toThrow();
@@ -188,7 +194,7 @@ describe('BulkRequestSchema', () => {
     expect(() =>
       parseBulkRequest({
         operations: [
-          { op: 'create', mapping: { sourcePort: 8080, targetHost: 'localhost', targetPort: 3000 } },
+          { op: 'create', mapping: { sourcePort: 8080, targetHost: 'localhost', targetPort: 3000, groupId: '01HTEST' } },
           { op: 'update', id: 'abc', patch: { enabled: false } },
           { op: 'delete', id: 'xyz' },
         ],
@@ -277,6 +283,126 @@ describe('LogEntrySchema', () => {
   it('rejects non-UTC datetime', () => {
     expect(() =>
       LogEntrySchema.parse({ ts: '2026-05-21T10:00:00', level: 'info', category: 'daemon', msg: 'x' }),
+    ).toThrow();
+  });
+});
+
+// ── GroupConfigSchema ─────────────────────────────────────────────────────────
+
+describe('GroupConfigSchema', () => {
+  it('accepts a valid group config', () => {
+    expect(() =>
+      GroupConfigSchema.parse({
+        id: '01HXYZ',
+        name: 'Dev',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    ).not.toThrow();
+  });
+
+  it('rejects a group with empty name', () => {
+    expect(() =>
+      GroupConfigSchema.parse({
+        id: '01HXYZ',
+        name: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    ).toThrow();
+  });
+});
+
+// ── MappingConfigSchema (with groupId) ────────────────────────────────────────
+
+describe('MappingConfigSchema (with groupId)', () => {
+  it('accepts a mapping with groupId', () => {
+    expect(() =>
+      MappingConfigSchema.parse({
+        id: '01HABC',
+        name: 'test',
+        sourceHost: '127.0.0.1',
+        sourcePort: 3000,
+        targetHost: '127.0.0.1',
+        targetPort: 8080,
+        enabled: false,
+        drainTimeoutMs: 30000,
+        groupId: '01HXYZ',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    ).not.toThrow();
+  });
+
+  it('rejects a mapping without groupId', () => {
+    expect(() =>
+      MappingConfigSchema.parse({
+        id: '01HABC',
+        name: 'test',
+        sourceHost: '127.0.0.1',
+        sourcePort: 3000,
+        targetHost: '127.0.0.1',
+        targetPort: 8080,
+        enabled: false,
+        drainTimeoutMs: 30000,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    ).toThrow();
+  });
+});
+
+// ── PortswitchConfigSchema (with groups) ─────────────────────────────────────
+
+describe('PortswitchConfigSchema (with groups)', () => {
+  it('accepts a config with a groups array', () => {
+    expect(() =>
+      PortswitchConfigSchema.parse({
+        schemaVersion: 2,
+        daemon: {
+          port: 65432,
+          logRetention: { maxFiles: 10, maxFileBytes: 5 * 1024 * 1024 },
+        },
+        groups: [],
+        mappings: [],
+      })
+    ).not.toThrow();
+  });
+});
+
+// ── CreateGroupRequestSchema ──────────────────────────────────────────────────
+
+describe('CreateGroupRequestSchema', () => {
+  it('accepts a valid create group request', () => {
+    expect(() => CreateGroupRequestSchema.parse({ name: 'Staging' })).not.toThrow();
+  });
+
+  it('rejects empty name', () => {
+    expect(() => CreateGroupRequestSchema.parse({ name: '' })).toThrow();
+  });
+});
+
+// ── CreateMappingRequest (with groupId) ──────────────────────────────────────
+
+describe('CreateMappingRequest (with groupId)', () => {
+  it('accepts a mapping create request with groupId', () => {
+    expect(() =>
+      CreateMappingRequestSchema.parse({
+        sourcePort: 3000,
+        targetHost: '127.0.0.1',
+        targetPort: 8080,
+        groupId: '01HXYZ',
+      })
+    ).not.toThrow();
+  });
+
+  it('rejects a mapping create request without groupId', () => {
+    expect(() =>
+      CreateMappingRequestSchema.parse({
+        sourcePort: 3000,
+        targetHost: '127.0.0.1',
+        targetPort: 8080,
+      })
     ).toThrow();
   });
 });

@@ -12,5 +12,6 @@ export const DEFAULT_CONFIG: PortswitchConfig = {
       maxFileBytes: 5 * 1024 * 1024,
     },
   },
+  groups: [],
   mappings: [],
 };

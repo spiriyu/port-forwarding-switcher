@@ -7,6 +7,8 @@ import {
   HealthResponse,
   MappingStats,
   MappingStatus,
+  CreateGroupRequest,
+  PatchGroupRequest,
 } from '../types/api';
 import { ErrorCode } from '../types/errors';
 import { LogLevel, LogCategory } from '../types/logging';
@@ -27,6 +29,14 @@ export const MappingStatsSchema: z.ZodType<MappingStats> = z.object({
   bytesOut: z.number().int().min(0),
 });
 
+export const CreateGroupRequestSchema: z.ZodType<CreateGroupRequest> = z.object({
+  name: z.string().min(1),
+});
+
+export const PatchGroupRequestSchema: z.ZodType<PatchGroupRequest> = z.object({
+  name: z.string().min(1).optional(),
+});
+
 export const CreateMappingRequestSchema: z.ZodType<CreateMappingRequest> = z.object({
   name: z.string().optional(),
   sourceHost: z.string().min(1).optional(),
@@ -34,6 +44,7 @@ export const CreateMappingRequestSchema: z.ZodType<CreateMappingRequest> = z.obj
   targetHost: z.string().min(1),
   targetPort: portNumber,
   enabled: z.boolean().optional(),
+  groupId: z.string().min(1),
 });
 
 export const PatchMappingRequestSchema: z.ZodType<PatchMappingRequest> = z.object({
