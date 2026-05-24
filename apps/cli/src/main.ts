@@ -434,7 +434,7 @@ export function createProgram(): Command {
     .option('--new-name <newName>', 'new name (for rename)');
 
   groupCmd.action(async (action: string) => {
-    const opts = groupCmd.opts() as { name?: string };
+    const opts = groupCmd.opts() as { name?: string; newName?: string };
     const c = getClient();
 
     try {
@@ -474,7 +474,7 @@ export function createProgram(): Command {
             console.error(chalk.red('Error:'), '--name is required for group rename');
             process.exit(ExitCode.BAD_INVOCATION);
           }
-          const newName = (groupCmd.opts() as { newName?: string }).newName;
+          const newName = opts.newName;
           if (!newName) {
             console.error(chalk.red('Error:'), '--new-name is required for group rename');
             process.exit(ExitCode.BAD_INVOCATION);
@@ -573,7 +573,7 @@ export function createProgram(): Command {
         }
         default: {
           console.error(chalk.red('Error:'), 'Unknown group action: ' + action);
-          console.error('  Valid actions: list, add, enable, disable, remove');
+          console.error('  Valid actions: list, add, rename, enable, disable, remove, duplicate');
           process.exit(ExitCode.BAD_INVOCATION);
         }
       }
