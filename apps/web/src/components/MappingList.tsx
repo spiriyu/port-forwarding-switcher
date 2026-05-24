@@ -13,6 +13,8 @@ interface Props {
   onAddMapping: (groupId: string) => void;
   onDeleteGroup: (id: string) => void;
   onAddGroup: () => void;
+  onRenameGroup: (id: string, newName: string) => void;
+  onDuplicateGroup: (id: string) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -31,6 +33,7 @@ export function MappingList({
   onEnableGroup, onDisableGroup,
   onToggleMapping, onDeleteMapping, onEditMapping,
   onAddMapping, onDeleteGroup, onAddGroup,
+  onRenameGroup, onDuplicateGroup,
 }: Props): React.ReactElement {
   return (
     <div style={styles.container}>
@@ -53,6 +56,8 @@ export function MappingList({
             onEditMapping={onEditMapping}
             onAddMapping={() => onAddMapping(g.id)}
             onDeleteGroup={() => onDeleteGroup(g.id)}
+            onRename={(newName) => onRenameGroup(g.id, newName)}
+            onDuplicate={() => onDuplicateGroup(g.id)}
           />
         ))
       )}
