@@ -412,12 +412,13 @@ describe('CreateMappingRequest (with groupId)', () => {
     ).not.toThrow();
   });
 
-  it('accepts a mapping create request without groupId (ungrouped)', () => {
+  it('accepts a mapping create request with groupId (required field)', () => {
     expect(() =>
       CreateMappingRequestSchema.parse({
         sourcePort: 3000,
         targetHost: '127.0.0.1',
         targetPort: 8080,
+        groupId: 'GRP01',
       })
     ).not.toThrow();
   });

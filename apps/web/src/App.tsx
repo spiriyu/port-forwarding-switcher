@@ -107,7 +107,7 @@ export default function App(): React.ReactElement {
   };
 
   const handleAdd = async (values: MappingDialogValues): Promise<void> => {
-    const r: CreateMappingRequest = { ...values, enabled: false };
+    const r: CreateMappingRequest = { ...values, enabled: false, groupId: 'GRP01' };
     try {
       const created = await apiClient.mappings.create(r);
       setMappings((prev) => [...prev, created]);

@@ -260,6 +260,7 @@ export function createProgram(): Command {
         targetPort: tgt.port,
         name: opts.name,
         enabled: opts.enabled ?? false,
+        groupId: 'GRP01',
       });
       if (isJson()) {
         console.log(toJson(mapping));

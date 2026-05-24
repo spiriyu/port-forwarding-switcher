@@ -104,7 +104,7 @@ export class InMemoryMappingStore {
     const sourceHost = input.sourceHost ?? '127.0.0.1';
     const sourcePort = input.sourcePort;
 
-    if (this.hasConflict(sourceHost, sourcePort, input.groupId ?? '')) {
+    if (this.hasConflict(sourceHost, sourcePort, input.groupId)) {
       throw new ApiError(
         ErrorCode.CONFLICT,
         `Source ${sourceHost}:${sourcePort} is already used by another mapping in this group.`,
@@ -121,7 +121,7 @@ export class InMemoryMappingStore {
       targetPort: input.targetPort,
       enabled: input.enabled ?? false,
       drainTimeoutMs: 30000,
-      groupId: input.groupId ?? '',
+      groupId: input.groupId,
       stats: { ...EMPTY_STATS },
       status: 'disabled',
       createdAt: now,
