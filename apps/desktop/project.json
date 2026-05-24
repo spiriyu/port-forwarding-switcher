@@ -1,0 +1,48 @@
+{
+  "name": "desktop",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/desktop/src",
+  "projectType": "application",
+  "root": "apps/desktop",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/desktop/main"],
+      "options": {
+        "command": "npx tsup src/main.ts --outDir ../../dist/apps/desktop/main --format cjs --no-splitting --external electron --tsconfig tsconfig.app.json",
+        "cwd": "apps/desktop"
+      }
+    },
+    "package": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/desktop/release"],
+      "dependsOn": ["build"],
+      "options": {
+        "command": "npx electron-builder --config electron-builder.config.json",
+        "cwd": "apps/desktop"
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/apps/desktop"],
+      "options": {
+        "passWithNoTests": true,
+        "config": "apps/desktop/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["apps/desktop/**/*.ts", "apps/desktop/**/*.tsx"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tsconfig.app.json --noEmit",
+        "cwd": "apps/desktop"
+      }
+    }
+  },
+  "tags": ["type:app", "scope:desktop"]
+}

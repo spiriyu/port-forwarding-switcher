@@ -1,0 +1,28 @@
+{
+  "appId": "com.portswitch.app",
+  "productName": "portswitch",
+  "directories": {
+    "output": "../../dist/apps/desktop/release",
+    "buildResources": "build-resources"
+  },
+  "files": [
+    "../../dist/apps/desktop/main/**/*",
+    "../../dist/apps/desktop/renderer/**/*",
+    "package.json"
+  ],
+  "mac": {
+    "category": "public.app-category.developer-tools",
+    "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
+  },
+  "linux": {
+    "target": [{ "target": "AppImage", "arch": ["x64"] }],
+    "category": "Utility"
+  },
+  "win": {
+    "target": [{ "target": "nsis", "arch": ["x64"] }]
+  },
+  "nsis": {
+    "oneClick": true,
+    "perMachine": false
+  }
+}

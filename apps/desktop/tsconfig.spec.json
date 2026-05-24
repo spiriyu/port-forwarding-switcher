@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/apps/desktop",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.spec.ts", "src/**/*.spec.tsx", "vite.config.ts", "vite.renderer.config.ts"]
+}
