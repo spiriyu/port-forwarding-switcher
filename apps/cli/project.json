@@ -1,0 +1,50 @@
+{
+  "name": "cli",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/cli/src",
+  "projectType": "application",
+  "root": "apps/cli",
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "main": "apps/cli/src/main.ts",
+        "outputPath": "dist/apps/cli",
+        "tsConfig": "apps/cli/tsconfig.app.json",
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true
+      }
+    },
+    "copy-ui": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build", { "projects": ["web"], "target": "build" }],
+      "options": {
+        "command": "cp -r dist/apps/web/. dist/apps/cli/ui"
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/apps/cli"],
+      "options": {
+        "passWithNoTests": true,
+        "config": "apps/cli/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["apps/cli/**/*.ts"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tsconfig.app.json --noEmit",
+        "cwd": "apps/cli"
+      }
+    }
+  },
+  "tags": ["type:app", "scope:cli"]
+}
