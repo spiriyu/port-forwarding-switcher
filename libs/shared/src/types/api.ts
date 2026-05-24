@@ -17,6 +17,7 @@ export interface MappingResponse {
   targetHost: string;
   targetPort: number;
   enabled: boolean;
+  groupId: string;
   status: MappingStatus;
   stats: MappingStats;
   error?: ApiErrorBody;
@@ -26,6 +27,19 @@ export interface MappingResponse {
 
 export interface ListMappingsResponse {
   mappings: MappingResponse[];
+}
+
+export interface GroupResponse {
+  id: string;
+  name: string;
+  mappingCount: number;
+  activeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListGroupsResponse {
+  groups: GroupResponse[];
 }
 
 export interface HealthResponse {
@@ -51,6 +65,7 @@ export interface CreateMappingRequest {
   targetHost: string;
   targetPort: number;
   enabled?: boolean;
+  groupId: string;
 }
 
 export interface PatchMappingRequest {
@@ -60,6 +75,14 @@ export interface PatchMappingRequest {
   targetHost?: string;
   targetPort?: number;
   enabled?: boolean;
+}
+
+export interface CreateGroupRequest {
+  name: string;
+}
+
+export interface PatchGroupRequest {
+  name?: string;
 }
 
 export interface BulkCreateOp {
