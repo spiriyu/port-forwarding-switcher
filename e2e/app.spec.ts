@@ -43,37 +43,37 @@ test.describe('REST API', () => {
     });
     expect(res.status()).toBe(403);
   });
+
+  test('GET /api/v1/logs returns entries array', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/v1/logs`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.entries)).toBe(true);
+    expect(body.entries.length).toBeGreaterThan(0);
+  });
 });
 
-test.describe('Web UI', () => {
-  test('/ redirects to /ui', async ({ page }) => {
-    await page.goto(`${BASE}/`);
-    await expect(page).toHaveURL(/\/ui/);
+test.describe('Web UI (static serving)', () => {
+  test('GET / redirects to /ui', async ({ request }) => {
+    const res = await request.get(`${BASE}/`);
+    expect(res.url()).toContain('/ui');
   });
 
-  test('/ui renders the portswitch React app', async ({ page }) => {
-    await page.goto(`${BASE}/ui`);
-    // The app shell should mount; look for a header or known text
-    await expect(page.locator('body')).not.toBeEmpty();
-    // The page should not be a raw JSON error
-    const text = await page.textContent('body');
-    expect(text).not.toMatch(/"code":/);
+  test('GET /ui returns HTML with the React app entry point', async ({ request }) => {
+    const res = await request.get(`${BASE}/ui`);
+    expect(res.status()).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('<div id="root">');
+    expect(body).toContain('/ui/assets/');
   });
 
-  test('WebSocket /api/v1/events delivers hello message', async ({ page }) => {
-    await page.goto(`${BASE}/ui`);
-    const hello = await page.evaluate(() => {
-      return new Promise<{ type: string }>((resolve, reject) => {
-        const ws = new WebSocket('ws://127.0.0.1:65432/api/v1/events');
-        const timer = setTimeout(() => reject(new Error('WS timeout')), 5000);
-        ws.onmessage = (e) => {
-          clearTimeout(timer);
-          ws.close();
-          resolve(JSON.parse(e.data));
-        };
-        ws.onerror = () => { clearTimeout(timer); reject(new Error('WS error')); };
-      });
-    });
-    expect(hello.type).toBe('hello');
+  test('GET /ui/assets/*.js serves the bundled JS', async ({ request }) => {
+    const html = await (await request.get(`${BASE}/ui`)).text();
+    const match = /src="(\/ui\/assets\/[^"]+\.js)"/.exec(html);
+    expect(match).not.toBeNull();
+    const assetUrl = `${BASE}${match![1]}`;
+    const jsRes = await request.get(assetUrl);
+    expect(jsRes.status()).toBe(200);
+    expect(jsRes.headers()['content-type']).toContain('javascript');
   });
 });

@@ -543,7 +543,9 @@ export function createProgram(): Command {
     const opts = serveCmd.opts() as { port: string };
     const { createDaemon } = await import('./serve/server');
     const port = parseInt(opts.port, 10);
-    const daemon = createDaemon({ port });
+    // Derive uiDir relative to the running binary, not the compiled source __dirname
+    const uiDir = nodePath.join(nodePath.dirname(process.argv[1] ?? ''), 'ui');
+    const daemon = createDaemon({ port, uiDir });
 
     process.on('unhandledRejection', (reason) => {
       console.error('Unhandled rejection:', reason);

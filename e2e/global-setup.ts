@@ -19,7 +19,7 @@ async function waitForDaemon(url: string, timeoutMs = 15_000): Promise<void> {
 }
 
 export default async function globalSetup() {
-  const bin = path.join(__dirname, '..', 'dist', 'apps', 'cli', 'main.js');
+  const bin = path.join(__dirname, '..', 'dist', 'apps', 'cli', 'main.cjs');
   daemon = spawn(process.execPath, [bin, 'serve', '--port', '65432'], {
     stdio: 'pipe',
     env: { ...process.env, PORTSWITCH_E2E: '1' },

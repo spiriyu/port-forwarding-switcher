@@ -4,8 +4,17 @@ import * as path from 'path';
 import express from 'express';
 import { WebSocketServer, WebSocket as WsSocket } from 'ws';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const PKG_VERSION: string = (require(path.join(__dirname, '../../../../package.json')) as { version: string }).version;
+// Resolve version from package.json — path differs between bundled (dist/) and test (__dirname = src/)
+const PKG_VERSION: string = (() => {
+  for (const rel of ['package.json', '../../package.json', '../../../../package.json']) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const pkg = require(path.join(__dirname, rel)) as { version?: string };
+      if (pkg.version) return pkg.version;
+    } catch { /* try next */ }
+  }
+  return '0.0.0';
+})();
 import {
   resolveConfigPath,
   resolveLogPath,
