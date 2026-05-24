@@ -1,0 +1,40 @@
+{
+  "name": "service-mgr",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/service-mgr/src",
+  "projectType": "library",
+  "root": "libs/service-mgr",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/service-mgr",
+        "main": "libs/service-mgr/src/index.ts",
+        "tsConfig": "libs/service-mgr/tsconfig.lib.json"
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/libs/service-mgr"],
+      "options": {
+        "passWithNoTests": true,
+        "config": "libs/service-mgr/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["libs/service-mgr/**/*.ts"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tsconfig.lib.json --noEmit",
+        "cwd": "libs/service-mgr"
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:service-mgr"]
+}

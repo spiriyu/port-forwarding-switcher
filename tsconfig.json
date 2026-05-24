@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./apps/daemon" },
+    { "path": "./apps/cli" },
+    { "path": "./apps/desktop" },
+    { "path": "./libs/shared" },
+    { "path": "./libs/proxy-core" },
+    { "path": "./libs/service-mgr" }
+  ]
+}

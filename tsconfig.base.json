@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@portswitch/shared": ["libs/shared/src/index.ts"],
+      "@portswitch/proxy-core": ["libs/proxy-core/src/index.ts"],
+      "@portswitch/service-mgr": ["libs/service-mgr/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

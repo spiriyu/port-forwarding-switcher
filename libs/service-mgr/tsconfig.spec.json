@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/libs/service-mgr",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*.test.ts", "src/**/*.spec.ts", "vite.config.ts"]
+}
