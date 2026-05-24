@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   CreateMappingRequest,
+  DuplicateGroupResponse,
   HealthResponse,
   MappingResponse,
   PatchMappingRequest,
@@ -144,6 +145,21 @@ export default function App(): React.ReactElement {
     } catch (err) { setError(errorMessage(err)); }
   };
 
+  const handleRenameGroup = async (id: string, newName: string): Promise<void> => {
+    try {
+      const updated = await apiClient.groups.patch(id, { name: newName });
+      setGroups((prev) => prev.map((g) => (g.id === id ? updated : g)));
+    } catch (err) { setError(errorMessage(err)); }
+  };
+
+  const handleDuplicateGroup = async (id: string): Promise<void> => {
+    try {
+      const result: DuplicateGroupResponse = await apiClient.groups.duplicate(id);
+      setGroups((prev) => [...prev, result.group]);
+      setMappings((prev) => [...prev, ...result.mappings]);
+    } catch (err) { setError(errorMessage(err)); }
+  };
+
   const handleToggleMapping = async (id: string): Promise<void> => {
     try {
       const updated = await apiClient.mappings.toggle(id);
@@ -224,6 +240,8 @@ export default function App(): React.ReactElement {
         onAddMapping={(groupId) => setAddMappingGroupId(groupId)}
         onDeleteGroup={(id) => void handleDeleteGroup(id)}
         onAddGroup={() => setShowAddGroup(true)}
+        onRenameGroup={(id, newName) => void handleRenameGroup(id, newName)}
+        onDuplicateGroup={(id) => void handleDuplicateGroup(id)}
       />
 
       {showAddGroup && (
