@@ -92,4 +92,18 @@ export class InMemoryGroupStore {
     if (!r) return;
     this.records.set(id, { ...r, ...counts });
   }
+
+  generateDuplicateName(sourceName: string): string {
+    const prefix = `${sourceName}_dup_`.toLowerCase();
+    let max = 0;
+    for (const r of this.records.values()) {
+      const lower = r.name.toLowerCase();
+      if (lower.startsWith(prefix)) {
+        const suffix = lower.slice(prefix.length);
+        const n = parseInt(suffix, 10);
+        if (!isNaN(n) && String(n) === suffix) max = Math.max(max, n);
+      }
+    }
+    return `${sourceName}_dup_${max + 1}`;
+  }
 }

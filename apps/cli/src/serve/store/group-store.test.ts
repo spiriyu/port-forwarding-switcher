@@ -86,4 +86,27 @@ describe('InMemoryGroupStore', () => {
     expect(store2.list()).toHaveLength(1);
     expect(store2.get('GRP01')?.name).toBe('Dev');
   });
+
+  describe('generateDuplicateName', () => {
+    it('returns <name>_dup_1 when no dups exist', () => {
+      store.create({ name: 'Dev' });
+      expect(store.generateDuplicateName('Dev')).toBe('Dev_dup_1');
+    });
+
+    it('returns <name>_dup_2 when _dup_1 exists', () => {
+      store.create({ name: 'Dev' });
+      store.create({ name: 'Dev_dup_1' });
+      expect(store.generateDuplicateName('Dev')).toBe('Dev_dup_2');
+    });
+
+    it('returns max+1 (not gap-fill) when only _dup_2 exists', () => {
+      store.create({ name: 'Dev' });
+      store.create({ name: 'Dev_dup_2' });
+      expect(store.generateDuplicateName('Dev')).toBe('Dev_dup_3');
+    });
+
+    it('works on a source name that has no existing groups', () => {
+      expect(store.generateDuplicateName('Prod')).toBe('Prod_dup_1');
+    });
+  });
 });
