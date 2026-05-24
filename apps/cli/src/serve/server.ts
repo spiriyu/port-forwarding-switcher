@@ -5,7 +5,7 @@ import express from 'express';
 import { WebSocketServer, WebSocket as WsSocket } from 'ws';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const PKG_VERSION: string = (require(path.join(__dirname, '../../../package.json')) as { version: string }).version;
+const PKG_VERSION: string = (require(path.join(__dirname, '../../../../package.json')) as { version: string }).version;
 import {
   resolveConfigPath,
   resolveLogPath,
