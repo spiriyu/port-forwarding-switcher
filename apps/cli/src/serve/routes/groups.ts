@@ -185,7 +185,7 @@ export function createGroupRoutes(ctx: DaemonContext): Router {
         }),
       );
 
-      groupStore.updateCounts(newGroup.id, { mappingCount: newMappings.length, activeCount: 0 });
+      syncGroupCounts(ctx, newGroup.id);
       const updatedGroup = groupStore.get(newGroup.id)!;
 
       persist();

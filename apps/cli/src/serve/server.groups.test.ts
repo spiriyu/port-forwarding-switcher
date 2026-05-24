@@ -125,11 +125,12 @@ describe('POST /api/v1/groups/:id/duplicate', () => {
     const g = await req<{ id: string }>('POST', '/api/v1/groups', { name: 'Dev' });
     await req('POST', '/api/v1/mappings', { sourcePort: 19900, targetHost: '127.0.0.1', targetPort: 19901, groupId: g.body.id });
     await req('POST', '/api/v1/mappings', { sourcePort: 19902, targetHost: '127.0.0.1', targetPort: 19903, groupId: g.body.id });
-    const r = await req<{ group: { id: string }; mappings: Array<{ enabled: boolean; groupId: string }> }>('POST', `/api/v1/groups/${g.body.id}/duplicate`);
+    const r = await req<{ group: { id: string; mappingCount: number }; mappings: Array<{ enabled: boolean; groupId: string }> }>('POST', `/api/v1/groups/${g.body.id}/duplicate`);
     expect(r.status).toBe(201);
     expect(r.body.mappings).toHaveLength(2);
     expect(r.body.mappings.every((m) => !m.enabled)).toBe(true);
     expect(r.body.mappings.every((m) => m.groupId === r.body.group.id)).toBe(true);
+    expect(r.body.group.mappingCount).toBe(2);
   });
 
   it('second duplicate gets _dup_2', async () => {
