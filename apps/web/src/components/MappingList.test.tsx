@@ -3,11 +3,21 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MappingList } from './MappingList';
-import type { MappingResponse } from '@portswitch/shared';
+import type { GroupResponse, MappingResponse } from '@portswitch/shared';
 import { ErrorCode } from '@portswitch/shared';
+
+const group: GroupResponse = {
+  id: 'GRP01',
+  name: 'Default',
+  mappingCount: 1,
+  activeCount: 1,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
 
 const mapping: MappingResponse = {
   id: '01JVTEST00000000000000001',
+  groupId: 'GRP01',
   name: 'dev-api',
   sourceHost: '127.0.0.1',
   sourcePort: 8080,
@@ -20,62 +30,72 @@ const mapping: MappingResponse = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-const noop = { onToggle: vi.fn(), onDelete: vi.fn(), onEdit: vi.fn(), onAdd: vi.fn() };
+const noop = {
+  onEnableGroup: vi.fn(),
+  onDisableGroup: vi.fn(),
+  onToggleMapping: vi.fn(),
+  onDeleteMapping: vi.fn(),
+  onEditMapping: vi.fn(),
+  onAddMapping: vi.fn(),
+  onDeleteGroup: vi.fn(),
+  onAddGroup: vi.fn(),
+};
 
 describe('MappingList', () => {
-  it('shows empty state when no mappings', () => {
-    render(<MappingList mappings={[]} {...noop} />);
-    expect(screen.getByText(/no mappings yet/i)).toBeInTheDocument();
+  it('shows empty state when no groups', () => {
+    render(<MappingList groups={[]} mappings={[]} {...noop} />);
+    expect(screen.getByText(/no groups yet/i)).toBeInTheDocument();
   });
 
-  it('shows Add Mapping button', () => {
-    render(<MappingList mappings={[]} {...noop} />);
-    expect(screen.getByRole('button', { name: /add mapping/i })).toBeInTheDocument();
+  it('shows Add Group button', () => {
+    render(<MappingList groups={[]} mappings={[]} {...noop} />);
+    expect(screen.getByRole('button', { name: /add group/i })).toBeInTheDocument();
   });
 
-  it('calls onAdd when Add Mapping clicked', () => {
-    const onAdd = vi.fn();
-    render(<MappingList mappings={[]} {...{ ...noop, onAdd }} />);
-    fireEvent.click(screen.getByRole('button', { name: /add mapping/i }));
-    expect(onAdd).toHaveBeenCalledOnce();
+  it('calls onAddGroup when Add Group clicked', () => {
+    const onAddGroup = vi.fn();
+    render(<MappingList groups={[]} mappings={[]} {...{ ...noop, onAddGroup }} />);
+    fireEvent.click(screen.getByRole('button', { name: /add group/i }));
+    expect(onAddGroup).toHaveBeenCalledOnce();
   });
 
-  it('renders mapping rows', () => {
-    render(<MappingList mappings={[mapping]} {...noop} />);
+  it('renders group section with mapping rows', () => {
+    render(<MappingList groups={[group]} mappings={[mapping]} {...noop} />);
+    expect(screen.getByText('Default')).toBeInTheDocument();
     expect(screen.getByTitle('dev-api')).toBeInTheDocument();
     expect(screen.getByText(/8080.*3000/)).toBeInTheDocument();
   });
 
-  it('calls onToggle with correct id', () => {
-    const onToggle = vi.fn();
-    render(<MappingList mappings={[mapping]} {...{ ...noop, onToggle }} />);
+  it('calls onToggleMapping with correct id', () => {
+    const onToggleMapping = vi.fn();
+    render(<MappingList groups={[group]} mappings={[mapping]} {...{ ...noop, onToggleMapping }} />);
     fireEvent.click(screen.getByTitle('Disable'));
-    expect(onToggle).toHaveBeenCalledWith(mapping.id);
+    expect(onToggleMapping).toHaveBeenCalledWith(mapping.id);
   });
 
-  it('calls onEdit with the full mapping when pencil clicked', () => {
-    const onEdit = vi.fn();
-    render(<MappingList mappings={[mapping]} {...{ ...noop, onEdit }} />);
+  it('calls onEditMapping with the full mapping when pencil clicked', () => {
+    const onEditMapping = vi.fn();
+    render(<MappingList groups={[group]} mappings={[mapping]} {...{ ...noop, onEditMapping }} />);
     fireEvent.click(screen.getByLabelText('Edit mapping'));
-    expect(onEdit).toHaveBeenCalledWith(mapping);
+    expect(onEditMapping).toHaveBeenCalledWith(mapping);
   });
 
-  it('requires two clicks to delete (confirmation step)', () => {
-    const onDelete = vi.fn();
-    render(<MappingList mappings={[mapping]} {...{ ...noop, onDelete }} />);
+  it('requires two clicks to delete mapping (confirmation step)', () => {
+    const onDeleteMapping = vi.fn();
+    render(<MappingList groups={[group]} mappings={[mapping]} {...{ ...noop, onDeleteMapping }} />);
 
     fireEvent.click(screen.getByLabelText('Delete mapping'));
-    expect(onDelete).not.toHaveBeenCalled();
+    expect(onDeleteMapping).not.toHaveBeenCalled();
     expect(screen.getByLabelText('Confirm delete')).toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText('Confirm delete'));
-    expect(onDelete).toHaveBeenCalledWith(mapping.id);
+    expect(onDeleteMapping).toHaveBeenCalledWith(mapping.id);
   });
 
   it('resets delete confirmation after 3s', () => {
     vi.useFakeTimers();
     try {
-      render(<MappingList mappings={[mapping]} {...noop} />);
+      render(<MappingList groups={[group]} mappings={[mapping]} {...noop} />);
       fireEvent.click(screen.getByLabelText('Delete mapping'));
       expect(screen.getByLabelText('Confirm delete')).toBeInTheDocument();
 
@@ -88,7 +108,8 @@ describe('MappingList', () => {
 
   it('shows Off toggle for disabled mapping', () => {
     const disabled: MappingResponse = { ...mapping, enabled: false, status: 'disabled' };
-    render(<MappingList mappings={[disabled]} {...noop} />);
+    const disabledGroup: GroupResponse = { ...group, activeCount: 0 };
+    render(<MappingList groups={[disabledGroup]} mappings={[disabled]} {...noop} />);
     expect(screen.getByTitle('Enable')).toBeInTheDocument();
   });
 
@@ -98,23 +119,20 @@ describe('MappingList', () => {
       status: 'error',
       error: { code: ErrorCode.EACCES_PRIVILEGED_PORT, message: 'Port 80 requires elevated privileges.' },
     };
-    render(<MappingList mappings={[errMapping]} {...noop} />);
+    render(<MappingList groups={[group]} mappings={[errMapping]} {...noop} />);
     expect(screen.getByText(/Port 80 requires elevated privileges/)).toBeInTheDocument();
   });
 
-  it('renders traffic stats when listening with activity', () => {
-    const busy: MappingResponse = {
-      ...mapping,
-      stats: { openConnections: 2, totalConnections: 5, bytesIn: 2048, bytesOut: 512 },
-    };
-    render(<MappingList mappings={[busy]} {...noop} />);
-    expect(screen.getByText(/2 active/)).toBeInTheDocument();
-    expect(screen.getByText(/2\.0KB/)).toBeInTheDocument();
-    expect(screen.getByText(/512B/)).toBeInTheDocument();
+  it('shows active badge when group has active mappings', () => {
+    const activeGroup: GroupResponse = { ...group, activeCount: 1, mappingCount: 1 };
+    render(<MappingList groups={[activeGroup]} mappings={[mapping]} {...noop} />);
+    expect(screen.getByText(/1\/1 active/)).toBeInTheDocument();
   });
 
-  it('hides stats for idle listening mappings', () => {
-    render(<MappingList mappings={[mapping]} {...noop} />);
-    expect(screen.queryByText(/↓/)).not.toBeInTheDocument();
+  it('shows mapping count badge when group has no active mappings', () => {
+    const inactiveGroup: GroupResponse = { ...group, activeCount: 0, mappingCount: 1 };
+    const disabled: MappingResponse = { ...mapping, enabled: false, status: 'disabled' };
+    render(<MappingList groups={[inactiveGroup]} mappings={[disabled]} {...noop} />);
+    expect(screen.getByText(/1 mapping/)).toBeInTheDocument();
   });
 });

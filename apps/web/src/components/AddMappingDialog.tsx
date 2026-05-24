@@ -7,9 +7,11 @@ export interface MappingDialogValues {
   sourcePort: number;
   targetHost: string;
   targetPort: number;
+  groupId: string;
 }
 
 interface Props {
+  groupId: string;
   initial?: MappingResponse;
   onConfirm: (values: MappingDialogValues) => void;
   onCancel: () => void;
@@ -53,7 +55,7 @@ function parseAddress(raw: string): { host: string; port: number } {
   return { host: raw.slice(0, colon), port: Number(raw.slice(colon + 1)) };
 }
 
-export function AddMappingDialog({ initial, onConfirm, onCancel }: Props): React.ReactElement {
+export function AddMappingDialog({ groupId, initial, onConfirm, onCancel }: Props): React.ReactElement {
   const isEdit = initial !== undefined;
   const [name, setName] = useState(initial?.name ?? '');
   const [source, setSource] = useState(
@@ -93,6 +95,7 @@ export function AddMappingDialog({ initial, onConfirm, onCancel }: Props): React
       sourcePort: src.port,
       targetHost: tgt.host,
       targetPort: tgt.port,
+      groupId,
     });
   };
 

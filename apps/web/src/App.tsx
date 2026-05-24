@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { CreateMappingRequest, HealthResponse, MappingResponse, PatchMappingRequest } from '@portswitch/shared';
+import type {
+  CreateMappingRequest,
+  HealthResponse,
+  MappingResponse,
+  PatchMappingRequest,
+  GroupResponse,
+} from '@portswitch/shared';
 import { StatusBar } from './components/StatusBar';
 import { MappingList } from './components/MappingList';
 import { AddMappingDialog, type MappingDialogValues } from './components/AddMappingDialog';
@@ -11,19 +17,20 @@ const layout: React.CSSProperties = {
   background: 'var(--bg-primary)', color: 'var(--text-primary)',
 };
 const toast: React.CSSProperties = {
-  padding: '10px 16px',
-  background: 'var(--toast-bg)',
-  borderBottom: '1px solid var(--toast-border)',
-  color: 'var(--danger)',
-  fontSize: '13px',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: '12px',
+  padding: '10px 16px', background: 'var(--toast-bg)',
+  borderBottom: '1px solid var(--toast-border)', color: 'var(--danger)',
+  fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
 };
 const toastClose: React.CSSProperties = {
-  background: 'transparent', border: 'none', color: 'var(--danger)',
-  cursor: 'pointer', fontSize: '16px', padding: '0 4px',
+  background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '16px', padding: '0 4px',
+};
+const dialogOverlay: React.CSSProperties = {
+  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+};
+const dialogBox: React.CSSProperties = {
+  background: 'var(--bg-primary)', border: '1px solid var(--border)',
+  borderRadius: '10px', padding: '24px', minWidth: '280px', maxWidth: '400px', width: '90%',
 };
 
 const HEALTH_POLL_MS = 10_000;
@@ -42,7 +49,10 @@ export default function App(): React.ReactElement {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
   const [mappings, setMappings] = useState<MappingResponse[]>([]);
-  const [showDialog, setShowDialog] = useState(false);
+  const [groups, setGroups] = useState<GroupResponse[]>([]);
+  const [addMappingGroupId, setAddMappingGroupId] = useState<string | null>(null);
+  const [showAddGroup, setShowAddGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
   const [editing, setEditing] = useState<MappingResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,12 +70,13 @@ export default function App(): React.ReactElement {
     setHealthLoading(false);
   }, []);
 
-  const refreshMappings = useCallback(async () => {
+  const refreshAll = useCallback(async () => {
     try {
-      const result = await apiClient.mappings.list();
-      setMappings(result.mappings);
+      const [mResult, gResult] = await Promise.all([apiClient.mappings.list(), apiClient.groups.list()]);
+      setMappings(mResult.mappings);
+      setGroups(gResult.groups);
     } catch {
-      // Mapping list failure is reflected by the daemon-unreachable status bar.
+      // Failures are reflected by the daemon-unreachable status bar.
     }
   }, []);
 
@@ -73,16 +84,16 @@ export default function App(): React.ReactElement {
     if (refreshTimer.current) return;
     refreshTimer.current = setTimeout(() => {
       refreshTimer.current = null;
-      void refreshMappings();
+      void refreshAll();
     }, WS_REFRESH_DEBOUNCE_MS);
-  }, [refreshMappings]);
+  }, [refreshAll]);
 
   const scheduleRefreshRef = useRef(scheduleRefresh);
   useEffect(() => { scheduleRefreshRef.current = scheduleRefresh; }, [scheduleRefresh]);
 
   useEffect(() => {
     void refreshHealth();
-    void refreshMappings();
+    void refreshAll();
     const healthInterval = setInterval(() => void refreshHealth(), HEALTH_POLL_MS);
     const unsub = apiClient.events.subscribe(() => scheduleRefreshRef.current());
     return () => {
@@ -90,34 +101,86 @@ export default function App(): React.ReactElement {
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
       unsub();
     };
-  }, [refreshHealth, refreshMappings]);
+  }, [refreshHealth, refreshAll]);
 
-  const handleToggle = async (id: string): Promise<void> => {
+  const handleEnableGroup = async (id: string): Promise<void> => {
     try {
-      const updated = await apiClient.mappings.toggle(id);
-      setMappings((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      const result = await apiClient.groups.enable(id);
+      setGroups((prev) => prev.map((g) => (g.id === id ? result.group : g)));
+      setMappings((prev) => {
+        const updatedIds = new Set(result.mappings.map((m) => m.id));
+        return prev.map((m) => (updatedIds.has(m.id) ? (result.mappings.find((u) => u.id === m.id) ?? m) : m));
+      });
     } catch (err) { setError(errorMessage(err)); }
   };
 
-  const handleDelete = async (id: string): Promise<void> => {
+  const handleDisableGroup = async (id: string): Promise<void> => {
+    try {
+      const result = await apiClient.groups.disable(id);
+      setGroups((prev) => prev.map((g) => (g.id === id ? result.group : g)));
+      setMappings((prev) => {
+        const updatedIds = new Set(result.mappings.map((m) => m.id));
+        return prev.map((m) => (updatedIds.has(m.id) ? (result.mappings.find((u) => u.id === m.id) ?? m) : m));
+      });
+    } catch (err) { setError(errorMessage(err)); }
+  };
+
+  const handleDeleteGroup = async (id: string): Promise<void> => {
+    try {
+      await apiClient.groups.delete(id);
+      setGroups((prev) => prev.filter((g) => g.id !== id));
+      setMappings((prev) => prev.filter((m) => m.groupId !== id));
+    } catch (err) { setError(errorMessage(err)); }
+  };
+
+  const handleAddGroup = async (): Promise<void> => {
+    const name = newGroupName.trim();
+    if (!name) return;
+    try {
+      const group = await apiClient.groups.create({ name });
+      setGroups((prev) => [...prev, group]);
+      setShowAddGroup(false);
+      setNewGroupName('');
+    } catch (err) { setError(errorMessage(err)); }
+  };
+
+  const handleToggleMapping = async (id: string): Promise<void> => {
+    try {
+      const updated = await apiClient.mappings.toggle(id);
+      setMappings((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      setGroups((prev) => prev.map((g) => {
+        if (g.id !== updated.groupId) return g;
+        const groupMappings = mappings.map((m) => (m.id === id ? updated : m)).filter((m) => m.groupId === g.id);
+        return { ...g, activeCount: groupMappings.filter((m) => m.enabled).length };
+      }));
+    } catch (err) { setError(errorMessage(err)); }
+  };
+
+  const handleDeleteMapping = async (id: string): Promise<void> => {
     try {
       await apiClient.mappings.delete(id);
       setMappings((prev) => prev.filter((m) => m.id !== id));
     } catch (err) { setError(errorMessage(err)); }
   };
 
-  const handleAdd = async (values: MappingDialogValues): Promise<void> => {
-    const r: CreateMappingRequest = { ...values, enabled: false, groupId: 'GRP01' };
+  const handleAddMapping = async (values: MappingDialogValues): Promise<void> => {
+    const r: CreateMappingRequest = { ...values, enabled: false };
     try {
       const created = await apiClient.mappings.create(r);
       setMappings((prev) => [...prev, created]);
-      setShowDialog(false);
+      setAddMappingGroupId(null);
     } catch (err) { setError(errorMessage(err)); }
   };
 
   const handleEditSave = async (values: MappingDialogValues): Promise<void> => {
     if (!editing) return;
-    const patch: PatchMappingRequest = { ...values };
+    const patch: PatchMappingRequest = {
+      name: values.name,
+      sourceHost: values.sourceHost,
+      sourcePort: values.sourcePort,
+      targetHost: values.targetHost,
+      targetPort: values.targetPort,
+    };
     try {
       const updated = await apiClient.mappings.patch(editing.id, patch);
       setMappings((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
@@ -135,20 +198,48 @@ export default function App(): React.ReactElement {
         </div>
       )}
       <MappingList
+        groups={groups}
         mappings={mappings}
-        onToggle={(id) => void handleToggle(id)}
-        onDelete={(id) => void handleDelete(id)}
-        onEdit={(m) => setEditing(m)}
-        onAdd={() => setShowDialog(true)}
+        onEnableGroup={(id) => void handleEnableGroup(id)}
+        onDisableGroup={(id) => void handleDisableGroup(id)}
+        onToggleMapping={(id) => void handleToggleMapping(id)}
+        onDeleteMapping={(id) => void handleDeleteMapping(id)}
+        onEditMapping={(m) => setEditing(m)}
+        onAddMapping={(groupId) => setAddMappingGroupId(groupId)}
+        onDeleteGroup={(id) => void handleDeleteGroup(id)}
+        onAddGroup={() => setShowAddGroup(true)}
       />
-      {showDialog && (
+
+      {showAddGroup && (
+        <div style={dialogOverlay} onClick={() => setShowAddGroup(false)}>
+          <div style={dialogBox} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ margin: '0 0 16px', fontSize: '16px' }}>New Group</h2>
+            <input
+              autoFocus
+              style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '14px', boxSizing: 'border-box' }}
+              placeholder="Group name"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void handleAddGroup(); if (e.key === 'Escape') { setShowAddGroup(false); setNewGroupName(''); } }}
+            />
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'flex-end' }}>
+              <button style={{ padding: '6px 14px', border: '1px solid var(--border)', borderRadius: '6px', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '13px' }} onClick={() => { setShowAddGroup(false); setNewGroupName(''); }}>Cancel</button>
+              <button style={{ padding: '6px 14px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }} onClick={() => void handleAddGroup()}>Create</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addMappingGroupId && (
         <AddMappingDialog
-          onConfirm={(values) => void handleAdd(values)}
-          onCancel={() => setShowDialog(false)}
+          groupId={addMappingGroupId}
+          onConfirm={(values) => void handleAddMapping(values)}
+          onCancel={() => setAddMappingGroupId(null)}
         />
       )}
       {editing && (
         <AddMappingDialog
+          groupId={editing.groupId}
           initial={editing}
           onConfirm={(values) => void handleEditSave(values)}
           onCancel={() => setEditing(null)}
