@@ -429,8 +429,9 @@ export function createProgram(): Command {
   // group
   const groupCmd = program
     .command('group <action>')
-    .description('Manage groups  (actions: list, add, enable, disable, remove)')
-    .option('-n, --name <name>', 'group name (required for add, enable, disable, remove)');
+    .description('Manage groups  (actions: list, add, rename, enable, disable, remove, duplicate)')
+    .option('-n, --name <name>', 'group name or id')
+    .option('--new-name <newName>', 'new name (for rename)');
 
   groupCmd.action(async (action: string) => {
     const opts = groupCmd.opts() as { name?: string };
@@ -465,6 +466,55 @@ export function createProgram(): Command {
             console.log(toJson(group));
           } else {
             console.log(chalk.green('Group created:'), group.name, chalk.dim(`(${group.id})`));
+          }
+          break;
+        }
+        case 'rename': {
+          if (!opts.name) {
+            console.error(chalk.red('Error:'), '--name is required for group rename');
+            process.exit(ExitCode.BAD_INVOCATION);
+          }
+          const newName = (groupCmd.opts() as { newName?: string }).newName;
+          if (!newName) {
+            console.error(chalk.red('Error:'), '--new-name is required for group rename');
+            process.exit(ExitCode.BAD_INVOCATION);
+          }
+          const { groups: all } = await c.listGroups();
+          const match = all.find((g) => g.name.toLowerCase() === opts.name!.toLowerCase() || g.id === opts.name);
+          if (!match) {
+            console.error(chalk.red('Error:'), `Group "${opts.name}" not found`);
+            process.exit(ExitCode.DAEMON_ERROR);
+          }
+          const renamed = await c.patchGroup(match.id, { name: newName });
+          if (isJson()) {
+            console.log(toJson(renamed));
+          } else {
+            console.log(chalk.green('Renamed:'), match.name, '→', renamed.name, chalk.dim(`(${renamed.id})`));
+          }
+          break;
+        }
+        case 'duplicate': {
+          if (!opts.name) {
+            console.error(chalk.red('Error:'), '--name is required for group duplicate');
+            process.exit(ExitCode.BAD_INVOCATION);
+          }
+          const { groups: all } = await c.listGroups();
+          const match = all.find((g) => g.name.toLowerCase() === opts.name!.toLowerCase() || g.id === opts.name);
+          if (!match) {
+            console.error(chalk.red('Error:'), `Group "${opts.name}" not found`);
+            process.exit(ExitCode.DAEMON_ERROR);
+          }
+          const result = await c.duplicateGroup(match.id);
+          if (isJson()) {
+            console.log(toJson(result));
+          } else {
+            console.log(
+              chalk.green('Duplicated:'),
+              match.name,
+              '→',
+              result.group.name,
+              chalk.dim(`(${result.mappings.length} mapping(s), all disabled)`),
+            );
           }
           break;
         }
