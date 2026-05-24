@@ -147,19 +147,35 @@ export default function App(): React.ReactElement {
   const handleToggleMapping = async (id: string): Promise<void> => {
     try {
       const updated = await apiClient.mappings.toggle(id);
-      setMappings((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      setGroups((prev) => prev.map((g) => {
-        if (g.id !== updated.groupId) return g;
-        const groupMappings = mappings.map((m) => (m.id === id ? updated : m)).filter((m) => m.groupId === g.id);
-        return { ...g, activeCount: groupMappings.filter((m) => m.enabled).length };
-      }));
+      setMappings((prev) => {
+        const next = prev.map((m) => (m.id === id ? updated : m));
+        setGroups((gs) => gs.map((g) => {
+          if (g.id !== updated.groupId) return g;
+          return { ...g, activeCount: next.filter((m) => m.groupId === g.id && m.enabled).length };
+        }));
+        return next;
+      });
     } catch (err) { setError(errorMessage(err)); }
   };
 
   const handleDeleteMapping = async (id: string): Promise<void> => {
     try {
       await apiClient.mappings.delete(id);
-      setMappings((prev) => prev.filter((m) => m.id !== id));
+      setMappings((prev) => {
+        const next = prev.filter((m) => m.id !== id);
+        const deleted = prev.find((m) => m.id === id);
+        if (deleted) {
+          setGroups((gs) => gs.map((g) => {
+            if (g.id !== deleted.groupId) return g;
+            return {
+              ...g,
+              mappingCount: next.filter((m) => m.groupId === g.id).length,
+              activeCount: next.filter((m) => m.groupId === g.id && m.enabled).length,
+            };
+          }));
+        }
+        return next;
+      });
     } catch (err) { setError(errorMessage(err)); }
   };
 
