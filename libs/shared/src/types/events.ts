@@ -26,6 +26,7 @@ export type ServerMessage =
   | { type: 'group.updated'; payload: { group: GroupResponse } }
   | { type: 'group.deleted'; payload: { id: string } }
   | { type: 'group.toggled'; payload: { group: GroupResponse; mappings: MappingResponse[] } }
+  | { type: 'group.duplicated'; payload: { group: GroupResponse; mappings: MappingResponse[] } }
   | { type: 'log'; payload: { entry: LogEntry } }
   | { type: 'log.dropped'; payload: { count: number } }
   | { type: 'daemon.shutdown'; payload: { reason: string } }

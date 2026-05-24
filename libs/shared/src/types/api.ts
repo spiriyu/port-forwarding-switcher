@@ -85,6 +85,11 @@ export interface PatchGroupRequest {
   name?: string;
 }
 
+export interface DuplicateGroupResponse {
+  group: GroupResponse;
+  mappings: MappingResponse[];
+}
+
 export interface BulkCreateOp {
   op: 'create';
   mapping: CreateMappingRequest;
