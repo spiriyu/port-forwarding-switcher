@@ -246,21 +246,44 @@ export function createProgram(): Command {
     .command('add <source> <target>')
     .description('Add a mapping  (source: [host:]port  target: [host:]port)')
     .option('-n, --name <name>', 'display name')
-    .option('-e, --enabled', 'start listening immediately');
+    .option('-e, --enabled', 'start listening immediately')
+    .option('--group <name>', 'group name or ID to add mapping to');
 
   addCmd.action(async (sourceArg: string, targetArg: string) => {
     try {
-      const opts = addCmd.opts() as { name?: string; enabled?: boolean };
+      const opts = addCmd.opts() as { name?: string; enabled?: boolean; group?: string };
+      const c = getClient();
+      let groupId: string;
+      if (opts.group) {
+        const { groups } = await c.listGroups();
+        const match = groups.find((g) => g.name.toLowerCase() === opts.group!.toLowerCase() || g.id === opts.group);
+        if (!match) {
+          console.error(chalk.red('Error:'), `Group "${opts.group}" not found`);
+          process.exit(ExitCode.DAEMON_ERROR);
+        }
+        groupId = match.id;
+      } else {
+        const { groups } = await c.listGroups();
+        if (groups.length === 0) {
+          console.error(chalk.red('Error:'), 'No groups exist. Create one with: portswitch group add --name <name>');
+          process.exit(ExitCode.DAEMON_ERROR);
+        }
+        if (groups.length > 1) {
+          console.error(chalk.red('Error:'), 'Multiple groups exist. Specify one with: --group <name>');
+          process.exit(ExitCode.DAEMON_ERROR);
+        }
+        groupId = groups[0]!.id;
+      }
       const src = parseAddress(sourceArg);
       const tgt = parseAddress(targetArg);
-      const mapping = await getClient().createMapping({
+      const mapping = await c.createMapping({
         sourceHost: src.host,
         sourcePort: src.port,
         targetHost: tgt.host,
         targetPort: tgt.port,
         name: opts.name,
         enabled: opts.enabled ?? false,
-        groupId: 'GRP01',
+        groupId,
       });
       if (isJson()) {
         console.log(toJson(mapping));
@@ -397,6 +420,112 @@ export function createProgram(): Command {
       } else {
         console.log(chalk.green('Updated:'));
         console.log(formatMapping(mapping));
+      }
+    } catch (err) {
+      handleError(err);
+    }
+  });
+
+  // group
+  const groupCmd = program
+    .command('group <action>')
+    .description('Manage groups  (actions: list, add, enable, disable, remove)')
+    .option('-n, --name <name>', 'group name (required for add, enable, disable, remove)');
+
+  groupCmd.action(async (action: string) => {
+    const opts = groupCmd.opts() as { name?: string };
+    const c = getClient();
+
+    try {
+      switch (action) {
+        case 'list': {
+          const { groups } = await c.listGroups();
+          if (isJson()) {
+            console.log(toJson(groups));
+          } else {
+            if (groups.length === 0) {
+              console.log(chalk.dim('No groups. Use: portswitch group add --name <name>'));
+            } else {
+              console.log(chalk.bold('ID'.padEnd(28)) + chalk.bold('NAME'.padEnd(24)) + chalk.bold('MAPPINGS') + '  ' + chalk.bold('ACTIVE'));
+              for (const g of groups) {
+                const active = g.activeCount > 0 ? chalk.green(String(g.activeCount)) : chalk.dim('0');
+                console.log(g.id.padEnd(28) + g.name.padEnd(24) + String(g.mappingCount).padEnd(10) + active);
+              }
+            }
+          }
+          break;
+        }
+        case 'add': {
+          if (!opts.name) {
+            console.error(chalk.red('Error:'), '--name is required for group add');
+            process.exit(ExitCode.BAD_INVOCATION);
+          }
+          const group = await c.createGroup({ name: opts.name });
+          if (isJson()) {
+            console.log(toJson(group));
+          } else {
+            console.log(chalk.green('Group created:'), group.name, chalk.dim(`(${group.id})`));
+          }
+          break;
+        }
+        case 'enable': {
+          if (!opts.name) {
+            console.error(chalk.red('Error:'), '--name is required for group enable');
+            process.exit(ExitCode.BAD_INVOCATION);
+          }
+          const { groups: all } = await c.listGroups();
+          const match = all.find((g) => g.name.toLowerCase() === opts.name!.toLowerCase() || g.id === opts.name);
+          if (!match) {
+            console.error(chalk.red('Error:'), `Group "${opts.name}" not found`);
+            process.exit(ExitCode.DAEMON_ERROR);
+          }
+          const result = await c.enableGroup(match.id);
+          if (isJson()) {
+            console.log(toJson(result));
+          } else {
+            console.log(chalk.green('Enabled:'), result.group.name, chalk.dim(`(${result.mappings.length} mapping(s))`));
+          }
+          break;
+        }
+        case 'disable': {
+          if (!opts.name) {
+            console.error(chalk.red('Error:'), '--name is required for group disable');
+            process.exit(ExitCode.BAD_INVOCATION);
+          }
+          const { groups: all } = await c.listGroups();
+          const match = all.find((g) => g.name.toLowerCase() === opts.name!.toLowerCase() || g.id === opts.name);
+          if (!match) {
+            console.error(chalk.red('Error:'), `Group "${opts.name}" not found`);
+            process.exit(ExitCode.DAEMON_ERROR);
+          }
+          const result = await c.disableGroup(match.id);
+          if (isJson()) {
+            console.log(toJson(result));
+          } else {
+            console.log(chalk.dim('Disabled:'), result.group.name);
+          }
+          break;
+        }
+        case 'remove': {
+          if (!opts.name) {
+            console.error(chalk.red('Error:'), '--name is required for group remove');
+            process.exit(ExitCode.BAD_INVOCATION);
+          }
+          const { groups: all } = await c.listGroups();
+          const match = all.find((g) => g.name.toLowerCase() === opts.name!.toLowerCase() || g.id === opts.name);
+          if (!match) {
+            console.error(chalk.red('Error:'), `Group "${opts.name}" not found`);
+            process.exit(ExitCode.DAEMON_ERROR);
+          }
+          await c.deleteGroup(match.id);
+          if (!isJson()) console.log(chalk.dim('Group removed.'));
+          break;
+        }
+        default: {
+          console.error(chalk.red('Error:'), 'Unknown group action: ' + action);
+          console.error('  Valid actions: list, add, enable, disable, remove');
+          process.exit(ExitCode.BAD_INVOCATION);
+        }
       }
     } catch (err) {
       handleError(err);

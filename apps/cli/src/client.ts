@@ -9,6 +9,10 @@ import {
   type HealthResponse,
   type DiagnosticsResponse,
   type LogEntry,
+  type GroupResponse,
+  type ListGroupsResponse,
+  type CreateGroupRequest,
+  type PatchGroupRequest,
 } from '@portswitch/shared';
 
 export const DEFAULT_URL = `http://127.0.0.1:${DEFAULT_DAEMON_PORT}/api`;
@@ -77,6 +81,15 @@ export class DaemonClient {
   patchMapping(id: string, req: PatchMappingRequest) { return this.req<MappingResponse>('PATCH', `/v1/mappings/${id}`, req); }
   deleteMapping(id: string) { return this.req<void>('DELETE', `/v1/mappings/${id}`); }
   toggleMapping(id: string) { return this.req<MappingResponse>('POST', `/v1/mappings/${id}/toggle`); }
+
+  listGroups() { return this.req<ListGroupsResponse>('GET', '/v1/groups'); }
+  getGroup(id: string) { return this.req<GroupResponse>('GET', `/v1/groups/${id}`); }
+  createGroup(req: CreateGroupRequest) { return this.req<GroupResponse>('POST', '/v1/groups', req); }
+  patchGroup(id: string, req: PatchGroupRequest) { return this.req<GroupResponse>('PATCH', `/v1/groups/${id}`, req); }
+  deleteGroup(id: string) { return this.req<void>('DELETE', `/v1/groups/${id}`); }
+  enableGroup(id: string) { return this.req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/v1/groups/${id}/enable`); }
+  disableGroup(id: string) { return this.req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/v1/groups/${id}/disable`); }
+
   health() { return this.req<HealthResponse>('GET', '/v1/health'); }
   diagnostics() { return this.req<DiagnosticsResponse>('GET', '/v1/diagnostics'); }
 
