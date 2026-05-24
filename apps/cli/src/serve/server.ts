@@ -99,6 +99,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
     const config: PortswitchConfig = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       daemon: currentDaemonConfig,
+      groups: [],
       mappings: store.toConfigs(),
     };
     await saveConfig(configPath, config);

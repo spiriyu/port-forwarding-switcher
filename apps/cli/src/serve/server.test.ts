@@ -103,7 +103,7 @@ describe('POST /v1/mappings', () => {
   it('creates a mapping and returns 201', async () => {
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, name: 'api' })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, name: 'api', groupId: 'GRP01' })
       .expect(201);
     expect(res.body.id).toBeTruthy();
     expect(res.body.name).toBe('api');
@@ -121,11 +121,11 @@ describe('POST /v1/mappings', () => {
   it('returns 409 for conflicting sourceHost:sourcePort', async () => {
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' })
       .expect(201);
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 4000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 4000, groupId: 'GRP01' })
       .expect(409);
   });
 
@@ -142,7 +142,7 @@ describe('GET /v1/mappings/:id', () => {
   it('returns the mapping by id', async () => {
     const create = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' })
       .expect(201);
     const res = await request(daemon.httpServer)
       .get(`/api/v1/mappings/${create.body.id}`)
@@ -159,7 +159,7 @@ describe('PATCH /v1/mappings/:id', () => {
   it('updates fields and returns updated mapping', async () => {
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' })
       .expect(201);
     const res = await request(daemon.httpServer)
       .patch(`/api/v1/mappings/${created.body.id}`)
@@ -179,7 +179,7 @@ describe('DELETE /v1/mappings/:id', () => {
   it('deletes the mapping and returns 204', async () => {
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' })
       .expect(201);
     await request(daemon.httpServer).delete(`/api/v1/mappings/${created.body.id}`).expect(204);
     await request(daemon.httpServer).get(`/api/v1/mappings/${created.body.id}`).expect(404);
@@ -194,7 +194,7 @@ describe('POST /v1/mappings/:id/toggle', () => {
   it('flips enabled state', async () => {
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, enabled: false })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, enabled: false, groupId: 'GRP01' })
       .expect(201);
     const toggled = await request(daemon.httpServer)
       .post(`/api/v1/mappings/${created.body.id}/toggle`)
@@ -213,8 +213,8 @@ describe('POST /v1/mappings/bulk', () => {
       .post('/api/v1/mappings/bulk')
       .send({
         operations: [
-          { op: 'create', mapping: { sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 } },
-          { op: 'create', mapping: { sourcePort: 9090, targetHost: '127.0.0.1', targetPort: 4000 } },
+          { op: 'create', mapping: { sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' } },
+          { op: 'create', mapping: { sourcePort: 9090, targetHost: '127.0.0.1', targetPort: 4000, groupId: 'GRP01' } },
         ],
       })
       .expect(200);
@@ -282,7 +282,7 @@ describe('WebSocket /api/v1/events', () => {
     const eventPromise = waitForEvent(ws, 'mapping.created');
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' })
       .expect(201);
     const event = await eventPromise;
     expect(event.type).toBe('mapping.created');
@@ -295,7 +295,7 @@ describe('WebSocket /api/v1/events', () => {
   it('broadcasts mapping.updated on toggle', async () => {
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' })
       .expect(201);
 
     const { ws } = await wsConnectAndHello(daemon.port);
@@ -311,7 +311,7 @@ describe('WebSocket /api/v1/events', () => {
   it('broadcasts mapping.deleted on delete', async () => {
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, groupId: 'GRP01' })
       .expect(201);
 
     const { ws } = await wsConnectAndHello(daemon.port);
@@ -334,7 +334,7 @@ describe('config persistence', () => {
   it('restores mappings from config file after restart', async () => {
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, name: 'persist-me' })
+      .send({ sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000, name: 'persist-me', groupId: 'GRP01' })
       .expect(201);
     const id = res.body.id as string;
 

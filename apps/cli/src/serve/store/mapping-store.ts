@@ -22,6 +22,7 @@ interface MappingRecord {
   targetPort: number;
   enabled: boolean;
   drainTimeoutMs: number;
+  groupId: string;
   stats: MappingStats;
   status: MappingStatus;
   error?: ApiErrorBody;
@@ -36,7 +37,6 @@ const EMPTY_STATS: MappingStats = {
   bytesOut: 0,
 };
 
-
 function toResponse(record: MappingRecord): MappingResponse {
   return {
     id: record.id,
@@ -46,6 +46,7 @@ function toResponse(record: MappingRecord): MappingResponse {
     targetHost: record.targetHost,
     targetPort: record.targetPort,
     enabled: record.enabled,
+    groupId: record.groupId,
     status: record.status,
     stats: record.stats,
     ...(record.error && { error: record.error }),
@@ -78,6 +79,7 @@ export class InMemoryMappingStore {
       targetPort: r.targetPort,
       enabled: r.enabled,
       drainTimeoutMs: r.drainTimeoutMs,
+      groupId: r.groupId,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
     }));
@@ -85,6 +87,12 @@ export class InMemoryMappingStore {
 
   list(): MappingResponse[] {
     return Array.from(this.records.values()).map(toResponse);
+  }
+
+  listByGroup(groupId: string): MappingResponse[] {
+    return Array.from(this.records.values())
+      .filter((r) => r.groupId === groupId)
+      .map(toResponse);
   }
 
   get(id: string): MappingResponse | undefined {
@@ -96,10 +104,10 @@ export class InMemoryMappingStore {
     const sourceHost = input.sourceHost ?? '127.0.0.1';
     const sourcePort = input.sourcePort;
 
-    if (this.hasConflict(sourceHost, sourcePort)) {
+    if (this.hasConflict(sourceHost, sourcePort, input.groupId)) {
       throw new ApiError(
         ErrorCode.CONFLICT,
-        `Source ${sourceHost}:${sourcePort} is already used by another mapping.`,
+        `Source ${sourceHost}:${sourcePort} is already used by another mapping in this group.`,
       );
     }
 
@@ -113,6 +121,7 @@ export class InMemoryMappingStore {
       targetPort: input.targetPort,
       enabled: input.enabled ?? false,
       drainTimeoutMs: 30000,
+      groupId: input.groupId,
       stats: { ...EMPTY_STATS },
       status: 'disabled',
       createdAt: now,
@@ -133,11 +142,11 @@ export class InMemoryMappingStore {
 
     if (
       (patch.sourceHost !== undefined || patch.sourcePort !== undefined) &&
-      this.hasConflict(newSourceHost, newSourcePort, id)
+      this.hasConflict(newSourceHost, newSourcePort, record.groupId, id)
     ) {
       throw new ApiError(
         ErrorCode.CONFLICT,
-        `Source ${newSourceHost}:${newSourcePort} is already used by another mapping.`,
+        `Source ${newSourceHost}:${newSourcePort} is already used by another mapping in this group.`,
       );
     }
 
@@ -215,9 +224,37 @@ export class InMemoryMappingStore {
     this.records.set(id, { ...r, stats });
   }
 
-  private hasConflict(sourceHost: string, sourcePort: number, excludeId?: string): boolean {
+  /**
+   * Returns IDs of enabled mappings in OTHER groups that conflict on
+   * sourceHost:sourcePort with enabled mappings IN the given group.
+   */
+  findActiveConflicts(groupId: string): string[] {
+    const groupMappings = Array.from(this.records.values()).filter(
+      (r) => r.groupId === groupId && r.enabled,
+    );
+    const otherEnabled = Array.from(this.records.values()).filter(
+      (r) => r.groupId !== groupId && r.enabled,
+    );
+
+    const conflicts: string[] = [];
+    for (const gm of groupMappings) {
+      const conflict = otherEnabled.find(
+        (om) => om.sourceHost === gm.sourceHost && om.sourcePort === gm.sourcePort,
+      );
+      if (conflict) conflicts.push(conflict.id);
+    }
+    return conflicts;
+  }
+
+  private hasConflict(
+    sourceHost: string,
+    sourcePort: number,
+    groupId: string,
+    excludeId?: string,
+  ): boolean {
     for (const [id, r] of this.records) {
       if (excludeId && id === excludeId) continue;
+      if (r.groupId !== groupId) continue;
       if (r.sourceHost === sourceHost && r.sourcePort === sourcePort) return true;
     }
     return false;

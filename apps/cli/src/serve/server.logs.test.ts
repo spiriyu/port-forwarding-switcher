@@ -110,7 +110,7 @@ describe('WebSocket log streaming', () => {
 
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 47600, targetHost: '127.0.0.1', targetPort: 3000, enabled: true });
+      .send({ sourcePort: 47600, targetHost: '127.0.0.1', targetPort: 3000, enabled: true, groupId: 'GRP01' });
 
     const logMsg = await logPromise;
     expect(logMsg.type).toBe('log');
@@ -137,7 +137,7 @@ describe('WebSocket log streaming', () => {
 
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: 47601, targetHost: '127.0.0.1', targetPort: 3000, enabled: true });
+      .send({ sourcePort: 47601, targetHost: '127.0.0.1', targetPort: 3000, enabled: true, groupId: 'GRP01' });
 
     await new Promise((r) => setTimeout(r, 100));
     expect(messages).toHaveLength(0);

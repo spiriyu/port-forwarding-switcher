@@ -1,7 +1,32 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryMappingStore } from './mapping-store';
+import { CreateMappingRequest } from '@portswitch/shared';
 
-const BASE = { sourcePort: 8080, targetHost: '127.0.0.1', targetPort: 3000 };
+function makeCreateReq(
+  overrides: Partial<{
+    sourcePort: number;
+    targetPort: number;
+    name: string;
+    enabled: boolean;
+    groupId: string;
+  }> = {},
+): CreateMappingRequest {
+  return {
+    sourcePort: overrides.sourcePort ?? 3000,
+    targetHost: '127.0.0.1',
+    targetPort: overrides.targetPort ?? 8080,
+    name: overrides.name ?? 'test',
+    enabled: overrides.enabled ?? false,
+    groupId: overrides.groupId ?? 'GRP01',
+  };
+}
+
+const BASE: CreateMappingRequest = {
+  sourcePort: 8080,
+  targetHost: '127.0.0.1',
+  targetPort: 3000,
+  groupId: 'GRP01',
+};
 
 describe('InMemoryMappingStore', () => {
   let store: InMemoryMappingStore;
@@ -93,7 +118,7 @@ describe('InMemoryMappingStore', () => {
 
   it('bulk executes mixed operations', () => {
     const results = store.bulk([
-      { op: 'create', mapping: BASE },
+      { op: 'create', mapping: { ...BASE } },
       { op: 'create', mapping: { ...BASE, sourcePort: 9090 } },
     ]);
     expect(results).toHaveLength(2);
@@ -105,7 +130,7 @@ describe('InMemoryMappingStore', () => {
   it('bulk records error for failed operations without aborting others', () => {
     store.create(BASE);
     const results = store.bulk([
-      { op: 'create', mapping: BASE }, // conflict
+      { op: 'create', mapping: { ...BASE } }, // conflict
       { op: 'create', mapping: { ...BASE, sourcePort: 9090 } }, // ok
     ]);
     expect(results[0]?.ok).toBe(false);
@@ -125,6 +150,7 @@ describe('InMemoryMappingStore', () => {
         targetPort: 3000,
         enabled: true,
         drainTimeoutMs: 30000,
+        groupId: 'GRP01',
         createdAt: now,
         updatedAt: now,
       },
@@ -141,5 +167,122 @@ describe('InMemoryMappingStore', () => {
     store2.hydrate(configs);
     expect(store2.list()).toHaveLength(1);
     expect(store2.list()[0]?.name).toBe('test');
+  });
+});
+
+describe('cross-group conflict rules', () => {
+  let store: InMemoryMappingStore;
+
+  beforeEach(() => {
+    store = new InMemoryMappingStore();
+  });
+
+  it('allows two mappings with the same source port in different groups', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01' });
+    expect(() =>
+      store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP02' }),
+    ).not.toThrow();
+  });
+
+  it('rejects two mappings with the same source port in the same group', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01' });
+    expect(() =>
+      store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP01' }),
+    ).toThrow();
+  });
+});
+
+describe('groupId on MappingResponse', () => {
+  let store: InMemoryMappingStore;
+
+  beforeEach(() => {
+    store = new InMemoryMappingStore();
+  });
+
+  it('includes groupId in the response', () => {
+    const m = store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01' });
+    expect(m.groupId).toBe('GRP01');
+  });
+});
+
+describe('findActiveConflicts', () => {
+  let store: InMemoryMappingStore;
+
+  beforeEach(() => {
+    store = new InMemoryMappingStore();
+  });
+
+  it('returns conflicting enabled mapping ids from other groups', () => {
+    // Create enabled mapping in GRP01
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01', enabled: true });
+
+    // Create enabled mapping in GRP02 that conflicts on same source port
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP02', enabled: true });
+
+    // findActiveConflicts for GRP02 should find the GRP01 mapping
+    const conflicts = store.findActiveConflicts('GRP02');
+    expect(conflicts.length).toBeGreaterThan(0);
+  });
+
+  it('returns empty array when no conflicts', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01', enabled: true });
+    store.create({ sourcePort: 4000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP02', enabled: true });
+
+    const conflicts = store.findActiveConflicts('GRP02');
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it('ignores disabled mappings when checking conflicts', () => {
+    // GRP01 has a disabled mapping on port 3000
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01', enabled: false });
+    // GRP02 has an enabled mapping on port 3000
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP02', enabled: true });
+
+    // No conflict because GRP01 mapping is disabled
+    const conflicts = store.findActiveConflicts('GRP02');
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it('ignores conflicts within the same group', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01', enabled: true });
+    store.create({ sourcePort: 4000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP01', enabled: true });
+
+    // No cross-group conflicts for GRP01 (no other groups)
+    const conflicts = store.findActiveConflicts('GRP01');
+    expect(conflicts).toHaveLength(0);
+  });
+});
+
+describe('listByGroup', () => {
+  let store: InMemoryMappingStore;
+
+  beforeEach(() => {
+    store = new InMemoryMappingStore();
+  });
+
+  it('returns only mappings belonging to the specified group', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01' });
+    store.create({ sourcePort: 4000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP02' });
+
+    const grp1Mappings = store.listByGroup('GRP01');
+    expect(grp1Mappings).toHaveLength(1);
+    expect(grp1Mappings[0]!.groupId).toBe('GRP01');
+  });
+
+  it('returns empty array for a group with no mappings', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01' });
+
+    const grp2Mappings = store.listByGroup('GRP02');
+    expect(grp2Mappings).toHaveLength(0);
+  });
+
+  it('returns all mappings for a group with multiple mappings', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01' });
+    store.create({ sourcePort: 4000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP01' });
+    store.create({ sourcePort: 5000, targetHost: '127.0.0.1', targetPort: 7000, groupId: 'GRP02' });
+
+    const grp1Mappings = store.listByGroup('GRP01');
+    expect(grp1Mappings).toHaveLength(2);
+    expect(grp1Mappings.every((m) => m.groupId === 'GRP01')).toBe(true);
   });
 });

@@ -71,7 +71,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     expect(res.body.status).toBe('listening');
@@ -86,7 +86,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: false })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: false, groupId: 'GRP01' })
       .expect(201);
 
     expect(res.body.status).toBe('disabled');
@@ -99,7 +99,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, groupId: 'GRP01' })
       .expect(201);
 
     expect(created.body.status).toBe('disabled');
@@ -121,7 +121,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     await tcpRoundTrip(sourcePort, 'before disable');
@@ -142,7 +142,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, groupId: 'GRP01' })
       .expect(201);
 
     const id = created.body.id as string;
@@ -164,7 +164,7 @@ describe('TCP forwarding end-to-end', () => {
     try {
       const res = await request(daemon.httpServer)
         .post('/api/v1/mappings')
-        .send({ sourcePort: blockedPort, targetHost: '127.0.0.1', targetPort: 9999, enabled: true })
+        .send({ sourcePort: blockedPort, targetHost: '127.0.0.1', targetPort: 9999, enabled: true, groupId: 'GRP01' })
         .expect(201);
 
       expect(res.body.status).toBe('error');
@@ -181,7 +181,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     await tcpRoundTrip(sourcePort, 'before delete');
@@ -199,7 +199,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort1, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort1, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     const id = created.body.id as string;
@@ -222,7 +222,7 @@ describe('TCP forwarding end-to-end', () => {
 
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     const id = res.body.id as string;

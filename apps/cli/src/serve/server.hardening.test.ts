@@ -103,7 +103,7 @@ describe('Config corruption', () => {
     const res = await request(daemon.httpServer).get('/api/v1/health').expect(200);
     expect(res.body.status).toBe('ok');
     const raw = await fs.readFile(configPath, 'utf-8');
-    expect(JSON.parse(raw).schemaVersion).toBe(1);
+    expect(JSON.parse(raw).schemaVersion).toBe(2);
   });
 });
 
@@ -117,7 +117,7 @@ describe('Target unreachable', () => {
 
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: unusedPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: unusedPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     // The listener should bind OK (source port is free); status is 'listening'
@@ -135,7 +135,7 @@ describe('Target unreachable', () => {
 
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     expect(res.body.status).toBe('listening');
@@ -168,7 +168,7 @@ describe('Concurrent operations', () => {
       ports.map((sourcePort) =>
         request(daemon.httpServer)
           .post('/api/v1/mappings')
-          .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort })
+          .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, groupId: 'GRP01' })
           .expect(201),
       ),
     );
@@ -186,7 +186,7 @@ describe('Concurrent operations', () => {
 
     const created = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: false })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: false, groupId: 'GRP01' })
       .expect(201);
 
     const id = created.body.id as string;
@@ -211,7 +211,7 @@ describe('Concurrent operations', () => {
 
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     const replies = await Promise.all(
@@ -234,7 +234,7 @@ describe('Persistence across restart', () => {
 
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ name: 'persist-test', sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ name: 'persist-test', sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     // Flush debounce and stop
@@ -262,7 +262,7 @@ describe('Persistence across restart', () => {
 
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ name: 'no-bind', sourcePort, targetHost: '127.0.0.1', targetPort: 9999, enabled: false })
+      .send({ name: 'no-bind', sourcePort, targetHost: '127.0.0.1', targetPort: 9999, enabled: false, groupId: 'GRP01' })
       .expect(201);
 
     await new Promise((r) => setTimeout(r, 100));
@@ -294,7 +294,7 @@ describe('External config edit (watchConfig)', () => {
     // Create a disabled mapping via API
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: false })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: false, groupId: 'GRP01' })
       .expect(201);
 
     const id = res.body.id as string;
@@ -325,7 +325,7 @@ describe('External config edit (watchConfig)', () => {
 
     await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     await tcpRoundTrip(sourcePort, 'before-edit');
@@ -375,7 +375,7 @@ describe('Error recovery', () => {
 
     const res = await request(daemon.httpServer)
       .post('/api/v1/mappings')
-      .send({ sourcePort: blockedPort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true })
+      .send({ sourcePort: blockedPort, targetHost: '127.0.0.1', targetPort: echoPort, enabled: true, groupId: 'GRP01' })
       .expect(201);
 
     expect(res.body.status).toBe('error');
