@@ -162,5 +162,39 @@ export function createGroupRoutes(ctx: DaemonContext): Router {
     }
   });
 
+  // POST /v1/groups/:id/duplicate
+  router.post('/:id/duplicate', (req: Request, res: Response) => {
+    const id = req.params['id'] ?? '';
+    try {
+      const source = groupStore.get(id);
+      if (!source) return sendApiError(res, new ApiError(ErrorCode.NOT_FOUND, 'Group not found.'));
+
+      const newName = groupStore.generateDuplicateName(source.name);
+      const newGroup = groupStore.create({ name: newName });
+
+      const sourceMembers = store.listByGroup(id);
+      const newMappings = sourceMembers.map((m) =>
+        store.create({
+          name: m.name,
+          sourceHost: m.sourceHost,
+          sourcePort: m.sourcePort,
+          targetHost: m.targetHost,
+          targetPort: m.targetPort,
+          enabled: false,
+          groupId: newGroup.id,
+        }),
+      );
+
+      groupStore.updateCounts(newGroup.id, { mappingCount: newMappings.length, activeCount: 0 });
+      const updatedGroup = groupStore.get(newGroup.id)!;
+
+      persist();
+      eventBus.broadcast({ type: 'group.duplicated', payload: { group: updatedGroup, mappings: newMappings } });
+      res.status(201).json({ group: updatedGroup, mappings: newMappings });
+    } catch (err) {
+      sendApiError(res, err);
+    }
+  });
+
   return router;
 }

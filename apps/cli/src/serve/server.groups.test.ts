@@ -112,3 +112,44 @@ describe('POST /api/v1/groups/:id/disable', () => {
     expect(r.body.mappings.every((m) => !m.enabled)).toBe(true);
   });
 });
+
+describe('POST /api/v1/groups/:id/duplicate', () => {
+  it('creates a new group with _dup_1 suffix', async () => {
+    const g = await req<{ id: string; name: string }>('POST', '/api/v1/groups', { name: 'Dev' });
+    const r = await req<{ group: { name: string }; mappings: unknown[] }>('POST', `/api/v1/groups/${g.body.id}/duplicate`);
+    expect(r.status).toBe(201);
+    expect(r.body.group.name).toBe('Dev_dup_1');
+  });
+
+  it('copies all mappings into the new group with enabled: false', async () => {
+    const g = await req<{ id: string }>('POST', '/api/v1/groups', { name: 'Dev' });
+    await req('POST', '/api/v1/mappings', { sourcePort: 19900, targetHost: '127.0.0.1', targetPort: 19901, groupId: g.body.id });
+    await req('POST', '/api/v1/mappings', { sourcePort: 19902, targetHost: '127.0.0.1', targetPort: 19903, groupId: g.body.id });
+    const r = await req<{ group: { id: string }; mappings: Array<{ enabled: boolean; groupId: string }> }>('POST', `/api/v1/groups/${g.body.id}/duplicate`);
+    expect(r.status).toBe(201);
+    expect(r.body.mappings).toHaveLength(2);
+    expect(r.body.mappings.every((m) => !m.enabled)).toBe(true);
+    expect(r.body.mappings.every((m) => m.groupId === r.body.group.id)).toBe(true);
+  });
+
+  it('second duplicate gets _dup_2', async () => {
+    const g = await req<{ id: string }>('POST', '/api/v1/groups', { name: 'Dev' });
+    await req('POST', `/api/v1/groups/${g.body.id}/duplicate`);
+    const r2 = await req<{ group: { name: string } }>('POST', `/api/v1/groups/${g.body.id}/duplicate`);
+    expect(r2.status).toBe(201);
+    expect(r2.body.group.name).toBe('Dev_dup_2');
+  });
+
+  it('duplicates an empty group (no mappings)', async () => {
+    const g = await req<{ id: string }>('POST', '/api/v1/groups', { name: 'Empty' });
+    const r = await req<{ group: { name: string }; mappings: unknown[] }>('POST', `/api/v1/groups/${g.body.id}/duplicate`);
+    expect(r.status).toBe(201);
+    expect(r.body.group.name).toBe('Empty_dup_1');
+    expect(r.body.mappings).toHaveLength(0);
+  });
+
+  it('returns 404 for unknown group id', async () => {
+    const r = await req('POST', '/api/v1/groups/NOPE/duplicate');
+    expect(r.status).toBe(404);
+  });
+});
