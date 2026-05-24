@@ -382,6 +382,22 @@ describe('CreateGroupRequestSchema', () => {
   });
 });
 
+// ── PatchGroupRequestSchema ───────────────────────────────────────────────────
+
+describe('PatchGroupRequestSchema', () => {
+  it('accepts a valid patch with a name', () => {
+    expect(() => PatchGroupRequestSchema.parse({ name: 'Updated' })).not.toThrow();
+  });
+
+  it('accepts an empty patch object (all fields optional)', () => {
+    expect(() => PatchGroupRequestSchema.parse({})).not.toThrow();
+  });
+
+  it('rejects empty string name', () => {
+    expect(() => PatchGroupRequestSchema.parse({ name: '' })).toThrow();
+  });
+});
+
 // ── CreateMappingRequest (with groupId) ──────────────────────────────────────
 
 describe('CreateMappingRequest (with groupId)', () => {
