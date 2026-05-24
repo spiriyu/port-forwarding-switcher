@@ -8,6 +8,7 @@ import type {
   PatchMappingRequest,
   CreateGroupRequest,
   PatchGroupRequest,
+  DuplicateGroupResponse,
 } from '@portswitch/shared';
 
 const BASE = '/api/v1';
@@ -38,6 +39,7 @@ export const apiClient = {
     delete: (id: string) => req<void>('DELETE', `/groups/${id}`),
     enable: (id: string) => req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/groups/${id}/enable`),
     disable: (id: string) => req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/groups/${id}/disable`),
+    duplicate: (id: string) => req<DuplicateGroupResponse>('POST', `/groups/${id}/duplicate`),
   },
   mappings: {
     list: () => req<ListMappingsResponse>('GET', '/mappings'),
