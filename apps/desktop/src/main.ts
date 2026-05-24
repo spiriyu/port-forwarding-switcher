@@ -1,5 +1,5 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, shell } from 'electron';
-import { execFile } from 'child_process';
+import { spawn } from 'child_process';
 import * as path from 'path';
 import * as http from 'http';
 
@@ -28,7 +28,8 @@ function isDaemonUp(): Promise<boolean> {
 
 function spawnDaemon(): void {
   const bin = path.join(app.getAppPath(), '..', 'cli', 'main.js');
-  execFile(process.execPath, [bin, 'serve'], { detached: true, stdio: 'ignore' }).unref();
+  const child = spawn(process.execPath, [bin, 'serve'], { detached: true, stdio: 'ignore' });
+  child.unref();
 }
 
 async function ensureDaemon(): Promise<void> {
