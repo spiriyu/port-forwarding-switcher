@@ -224,6 +224,25 @@ export class InMemoryMappingStore {
     this.records.set(id, { ...r, stats });
   }
 
+  /** Returns IDs of enabled mappings in other groups that would conflict with any mapping in the given group (regardless of their current enabled state). */
+  findConflictsIfEnabled(groupId: string): string[] {
+    const groupMappings = Array.from(this.records.values()).filter(
+      (r) => r.groupId === groupId,
+    );
+    const otherEnabled = Array.from(this.records.values()).filter(
+      (r) => r.groupId !== groupId && r.enabled,
+    );
+
+    const conflicts: string[] = [];
+    for (const gm of groupMappings) {
+      const conflict = otherEnabled.find(
+        (om) => om.sourceHost === gm.sourceHost && om.sourcePort === gm.sourcePort,
+      );
+      if (conflict) conflicts.push(conflict.id);
+    }
+    return conflicts;
+  }
+
   /**
    * Returns IDs of enabled mappings in OTHER groups that conflict on
    * sourceHost:sourcePort with enabled mappings IN the given group.

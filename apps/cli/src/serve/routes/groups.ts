@@ -100,60 +100,63 @@ export function createGroupRoutes(ctx: DaemonContext): Router {
   // POST /v1/groups/:id/enable — enable all mappings (all-or-nothing conflict check)
   router.post('/:id/enable', async (req: Request, res: Response) => {
     const id = req.params['id'] ?? '';
-    const group = groupStore.get(id);
-    if (!group) return sendApiError(res, new ApiError(ErrorCode.NOT_FOUND, 'Group not found.'));
+    try {
+      const group = groupStore.get(id);
+      if (!group) return sendApiError(res, new ApiError(ErrorCode.NOT_FOUND, 'Group not found.'));
 
-    // Temporarily mark all members enabled so findActiveConflicts can see the conflicts
-    const members = store.listByGroup(id);
-    const prevEnabled = members.map((m) => m.enabled);
-    for (const m of members) {
-      store.update(m.id, { enabled: true });
-    }
-    const conflicts = store.findActiveConflicts(id);
-    if (conflicts.length > 0) {
-      // Roll back — restore prior enabled state
-      for (let i = 0; i < members.length; i++) {
-        store.update(members[i]!.id, { enabled: prevEnabled[i] ?? false });
+      const conflicts = store.findConflictsIfEnabled(id);
+      if (conflicts.length > 0) {
+        return sendApiError(
+          res,
+          new ApiError(
+            ErrorCode.CONFLICT,
+            `Cannot enable group: ${conflicts.length} mapping(s) in other groups conflict on source port.`,
+            { conflictingMappingIds: conflicts },
+          ),
+        );
       }
-      return sendApiError(
-        res,
-        new ApiError(
-          ErrorCode.CONFLICT,
-          `Cannot enable group: ${conflicts.length} mapping(s) in other groups conflict on source port.`,
-          { conflictingMappingIds: conflicts },
-        ),
-      );
+
+      const members = store.listByGroup(id);
+      for (const m of members) {
+        store.update(m.id, { enabled: true });
+      }
+      await Promise.all(members.map((m) => startForwarding(m.id)));
+
+      const updatedMembers = store.listByGroup(id);
+      syncGroupCounts(ctx, id);
+      const updatedGroup = groupStore.get(id)!;
+
+      persist();
+      eventBus.broadcast({ type: 'group.toggled', payload: { group: updatedGroup, mappings: updatedMembers } });
+      res.json({ group: updatedGroup, mappings: updatedMembers });
+    } catch (err) {
+      sendApiError(res, err);
     }
-    await Promise.all(members.map((m) => startForwarding(m.id)));
-
-    const updatedMembers = store.listByGroup(id);
-    syncGroupCounts(ctx, id);
-    const updatedGroup = groupStore.get(id)!;
-
-    persist();
-    eventBus.broadcast({ type: 'group.toggled', payload: { group: updatedGroup, mappings: updatedMembers } });
-    res.json({ group: updatedGroup, mappings: updatedMembers });
   });
 
   // POST /v1/groups/:id/disable — disable all mappings
   router.post('/:id/disable', async (req: Request, res: Response) => {
     const id = req.params['id'] ?? '';
-    const group = groupStore.get(id);
-    if (!group) return sendApiError(res, new ApiError(ErrorCode.NOT_FOUND, 'Group not found.'));
+    try {
+      const group = groupStore.get(id);
+      if (!group) return sendApiError(res, new ApiError(ErrorCode.NOT_FOUND, 'Group not found.'));
 
-    const members = store.listByGroup(id);
-    await Promise.all(members.map((m) => stopForwarding(m.id)));
-    for (const m of members) {
-      store.update(m.id, { enabled: false });
+      const members = store.listByGroup(id);
+      await Promise.all(members.map((m) => stopForwarding(m.id)));
+      for (const m of members) {
+        store.update(m.id, { enabled: false });
+      }
+
+      const updatedMembers = store.listByGroup(id);
+      syncGroupCounts(ctx, id);
+      const updatedGroup = groupStore.get(id)!;
+
+      persist();
+      eventBus.broadcast({ type: 'group.toggled', payload: { group: updatedGroup, mappings: updatedMembers } });
+      res.json({ group: updatedGroup, mappings: updatedMembers });
+    } catch (err) {
+      sendApiError(res, err);
     }
-
-    const updatedMembers = store.listByGroup(id);
-    syncGroupCounts(ctx, id);
-    const updatedGroup = groupStore.get(id)!;
-
-    persist();
-    eventBus.broadcast({ type: 'group.toggled', payload: { group: updatedGroup, mappings: updatedMembers } });
-    res.json({ group: updatedGroup, mappings: updatedMembers });
   });
 
   return router;

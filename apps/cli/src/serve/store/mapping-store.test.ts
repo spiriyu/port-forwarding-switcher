@@ -253,6 +253,32 @@ describe('findActiveConflicts', () => {
   });
 });
 
+describe('findConflictsIfEnabled', () => {
+  let store: InMemoryMappingStore;
+
+  beforeEach(() => {
+    store = new InMemoryMappingStore();
+  });
+
+  it('returns conflicting mapping ids even when group members are not yet enabled', () => {
+    // GRP01 mapping is NOT enabled yet
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01', enabled: false });
+    // GRP02 mapping IS enabled and conflicts
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP02', enabled: true });
+
+    const conflicts = store.findConflictsIfEnabled('GRP01');
+    expect(conflicts.length).toBe(1);
+  });
+
+  it('returns empty array when no conflicts exist', () => {
+    store.create({ sourcePort: 3000, targetHost: '127.0.0.1', targetPort: 8080, groupId: 'GRP01', enabled: false });
+    store.create({ sourcePort: 4000, targetHost: '127.0.0.1', targetPort: 9090, groupId: 'GRP02', enabled: true });
+
+    const conflicts = store.findConflictsIfEnabled('GRP01');
+    expect(conflicts).toHaveLength(0);
+  });
+});
+
 describe('listByGroup', () => {
   let store: InMemoryMappingStore;
 
