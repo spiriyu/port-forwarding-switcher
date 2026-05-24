@@ -85,6 +85,17 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
   },
   emptyMsg: { fontSize: '13px', color: 'var(--text-faint)', textAlign: 'center', padding: '12px 0' },
+  renameInput: {
+    fontSize: '14px',
+    fontWeight: 600,
+    flex: 1,
+    background: 'var(--bg-primary)',
+    border: '1px solid var(--accent)',
+    borderRadius: '4px',
+    color: 'var(--text-primary)',
+    padding: '1px 6px',
+    outline: 'none',
+  },
 };
 
 interface MappingRowProps {
@@ -148,16 +159,20 @@ export interface GroupSectionProps {
   onEditMapping: (m: MappingResponse) => void;
   onAddMapping: () => void;
   onDeleteGroup: () => void;
+  onRename: (newName: string) => void;
+  onDuplicate: () => void;
 }
 
 export function GroupSection({
   group, mappings,
   onEnable, onDisable,
   onToggleMapping, onDeleteMapping, onEditMapping, onAddMapping,
-  onDeleteGroup,
+  onDeleteGroup, onRename, onDuplicate,
 }: GroupSectionProps): React.ReactElement {
   const [expanded, setExpanded] = useState(true);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
   const isActive = group.activeCount > 0;
 
   useEffect(() => {
@@ -175,7 +190,37 @@ export function GroupSection({
     <div style={styles.group}>
       <div style={styles.header} onClick={() => setExpanded((e) => !e)}>
         <span style={styles.chevron}>{expanded ? '▼' : '▶'}</span>
-        <span style={styles.groupName}>{group.name}</span>
+        {renaming ? (
+          <input
+            autoFocus
+            style={styles.renameInput}
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={() => {
+              const trimmed = renameValue.trim();
+              if (trimmed && trimmed !== group.name) onRename(trimmed);
+              setRenaming(false);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') {
+                const trimmed = renameValue.trim();
+                if (trimmed && trimmed !== group.name) onRename(trimmed);
+                setRenaming(false);
+              }
+              if (e.key === 'Escape') setRenaming(false);
+            }}
+          />
+        ) : (
+          <span
+            style={{ ...styles.groupName, cursor: 'text' }}
+            title="Click to rename"
+            onClick={(e) => { e.stopPropagation(); setRenameValue(group.name); setRenaming(true); }}
+          >
+            {group.name}
+          </span>
+        )}
         {isActive
           ? <span style={styles.activeBadge}>{group.activeCount}/{group.mappingCount} active</span>
           : <span style={styles.badge}>{group.mappingCount} mapping{group.mappingCount !== 1 ? 's' : ''}</span>
@@ -186,6 +231,14 @@ export function GroupSection({
           title={isActive ? 'Disable group' : 'Enable group'}
         >
           {isActive ? 'Disable all' : 'Enable all'}
+        </button>
+        <button
+          style={{ ...styles.actionBtn, color: 'var(--text-secondary)' }}
+          onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+          title="Duplicate group"
+          aria-label="Duplicate group"
+        >
+          ⧉
         </button>
         <button
           style={confirmingDelete
