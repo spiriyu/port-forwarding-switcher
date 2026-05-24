@@ -1,8 +1,8 @@
 import { WebSocket } from 'ws';
-import { ServerMessage, ClientMessage, LogSubscribePayload, MappingResponse, LogEntry, LogLevel, LogCategory, LogSubscribePayloadSchema } from '@portswitch/shared';
+import { ServerMessage, ClientMessage, LogSubscribePayload, MappingResponse, GroupResponse, LogEntry, LogLevel, LogCategory, LogSubscribePayloadSchema } from '@portswitch/shared';
 
 const LOG_DROP_BUFFER = 500;
-const LOG_DROP_BYTES = 256 * 1024; // 256KB socket buffer threshold
+const LOG_DROP_BYTES = 256 * 1024;
 
 interface ClientState {
   logFilter: LogSubscribePayload | null;
@@ -31,12 +31,12 @@ export class EventBus {
     this.version = version;
   }
 
-  addClient(ws: WebSocket, snapshotMappings: MappingResponse[]): void {
+  addClient(ws: WebSocket, snapshotMappings: MappingResponse[], snapshotGroups: GroupResponse[]): void {
     this.clients.set(ws, { logFilter: null, pendingDrops: 0, logBuffer: [] });
 
     this.send(ws, {
       type: 'hello',
-      payload: { serverVersion: this.version, snapshot: { mappings: snapshotMappings } },
+      payload: { serverVersion: this.version, snapshot: { mappings: snapshotMappings, groups: snapshotGroups } },
     });
 
     ws.on('message', (data) => this.handleMessage(ws, data.toString()));
@@ -64,7 +64,6 @@ export class EventBus {
         ._socket?.writableLength ?? 0;
 
       if (socketLen > LOG_DROP_BYTES || state.logBuffer.length > 0) {
-        // Consumer is slow — buffer or drop
         if (state.logBuffer.length < LOG_DROP_BUFFER) {
           state.logBuffer.push(entry);
         } else {
@@ -138,5 +137,4 @@ export class EventBus {
   }
 }
 
-// Re-export for convenience
 export type { LogEntry, LogLevel, LogCategory };

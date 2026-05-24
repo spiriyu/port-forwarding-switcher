@@ -44,7 +44,7 @@ export const CreateMappingRequestSchema: z.ZodType<CreateMappingRequest> = z.obj
   targetHost: z.string().min(1),
   targetPort: portNumber,
   enabled: z.boolean().optional(),
-  groupId: z.string().min(1),
+  groupId: z.string().min(1).optional(),
 });
 
 export const PatchMappingRequestSchema: z.ZodType<PatchMappingRequest> = z.object({

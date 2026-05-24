@@ -25,15 +25,18 @@ import {
 } from '@portswitch/shared';
 import { createForwarder, ForwarderHandle } from '@portswitch/proxy-core';
 import { InMemoryMappingStore } from './store/mapping-store';
+import { InMemoryGroupStore } from './store/group-store';
 import { EventBus } from './ws/event-bus';
 import { Logger } from './logging/logger';
 import { loadConfig, saveConfig, watchConfig, debounce } from './config/config-store';
 import { createHealthRouter } from './routes/health';
 import { createMappingRoutes } from './routes/mappings';
 import { createLogsRouter, diagnosticsHandler } from './routes/logs';
+import { createGroupRoutes } from './routes/groups';
 
 export interface DaemonContext {
   store: InMemoryMappingStore;
+  groupStore: InMemoryGroupStore;
   eventBus: EventBus;
   logger: Logger;
   startedAt: number;
@@ -70,6 +73,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
   const startedAt = Date.now();
 
   const store = new InMemoryMappingStore();
+  const groupStore = new InMemoryGroupStore();
   const eventBus = new EventBus(PKG_VERSION);
   const forwarders = new Map<string, ForwarderHandle>();
   const forwarderLocks = new Map<string, Promise<void>>();
@@ -99,7 +103,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
     const config: PortswitchConfig = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       daemon: currentDaemonConfig,
-      groups: [],
+      groups: groupStore.toConfigs(),
       mappings: store.toConfigs(),
     };
     await saveConfig(configPath, config);
@@ -167,7 +171,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
   function liveStats(id: string) { return forwarders.get(id)?.stats(); }
 
   const ctx: DaemonContext = {
-    store, eventBus, logger, startedAt, version: PKG_VERSION,
+    store, groupStore, eventBus, logger, startedAt, version: PKG_VERSION,
     configPath, logPath,
     get daemonConfig() { return currentDaemonConfig; },
     persist, startForwarding, stopForwarding, liveStats,
@@ -206,6 +210,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
   apiRouter.use('/v1/mappings', createMappingRoutes(ctx));
   apiRouter.use('/v1/logs', createLogsRouter(ctx));
   apiRouter.get('/v1/diagnostics', diagnosticsHandler(ctx) as express.RequestHandler);
+  apiRouter.use('/v1/groups', createGroupRoutes(ctx));
   app.use('/api', apiRouter);
 
   // Serve React UI at /ui (gracefully skip if not built yet)
@@ -243,7 +248,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
 
   wss.on('connection', (ws) => {
     (ws as TrackedSocket)._pingSent = false;
-    eventBus.addClient(ws, store.list());
+    eventBus.addClient(ws, store.list(), groupStore.list());
     logger.debug('api', 'wsConnected', { clients: eventBus.clientCount() });
     ws.once('close', () => {
       logger.debug('api', 'wsDisconnected', { clients: eventBus.clientCount() });
@@ -259,6 +264,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
       logger.info('daemon', 'startup', { version: PKG_VERSION, configPath, logPath });
       const config = await loadConfig(configPath);
       currentDaemonConfig = config.daemon;
+      groupStore.hydrate(config.groups);
       store.hydrate(config.mappings);
       logger.info('config', 'loaded', { configPath, mappings: config.mappings.length });
       await Promise.all(store.list().filter((m) => m.enabled).map((m) => startForwarding(m.id)));
@@ -268,6 +274,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
         const prevIds = new Set(prevList.map((m) => m.id));
         const prevEnabled = new Set(prevList.filter((m) => m.enabled).map((m) => m.id));
         currentDaemonConfig = reloaded.daemon;
+        groupStore.hydrate(reloaded.groups);
         store.hydrate(reloaded.mappings);
         for (const [id] of forwarders) store.setListening(id);
         const next = store.list();
@@ -279,7 +286,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
         void Promise.all([...[...toStop, ...deleted].map((id) => stopForwarding(id))])
           .then(() => Promise.all(toStart.map((m) => startForwarding(m.id))));
         logger.info('config', 'externalEditDetected', { configPath });
-        eventBus.broadcast({ type: 'hello', payload: { serverVersion: PKG_VERSION, snapshot: { mappings: next } } });
+        eventBus.broadcast({ type: 'hello', payload: { serverVersion: PKG_VERSION, snapshot: { mappings: next, groups: groupStore.list() } } });
       });
 
       await new Promise<void>((resolve, reject) => {

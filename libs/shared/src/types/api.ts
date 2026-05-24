@@ -65,7 +65,7 @@ export interface CreateMappingRequest {
   targetHost: string;
   targetPort: number;
   enabled?: boolean;
-  groupId: string;
+  groupId?: string;
 }
 
 export interface PatchMappingRequest {
