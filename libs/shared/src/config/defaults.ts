@@ -1,7 +1,7 @@
 import { PortswitchConfig } from '../types/config';
 
 export const DEFAULT_DAEMON_PORT = 65432;
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 export const DEFAULT_CONFIG: PortswitchConfig = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
