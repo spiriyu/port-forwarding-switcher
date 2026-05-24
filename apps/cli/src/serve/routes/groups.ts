@@ -56,7 +56,9 @@ export function createGroupRoutes(ctx: DaemonContext): Router {
     const group = groupStore.get(id);
     if (!group) return sendApiError(res, new ApiError(ErrorCode.NOT_FOUND, 'Group not found.'));
     syncGroupCounts(ctx, id);
-    res.json(groupStore.get(id));
+    const updated = groupStore.get(id);
+    if (!updated) return sendApiError(res, new ApiError(ErrorCode.NOT_FOUND, 'Group not found.'));
+    res.json(updated);
   });
 
   // PATCH /v1/groups/:id
@@ -117,10 +119,11 @@ export function createGroupRoutes(ctx: DaemonContext): Router {
       }
 
       const members = store.listByGroup(id);
+      // Start forwarding first — only update store state after success
+      await Promise.all(members.map((m) => startForwarding(m.id)));
       for (const m of members) {
         store.update(m.id, { enabled: true });
       }
-      await Promise.all(members.map((m) => startForwarding(m.id)));
 
       const updatedMembers = store.listByGroup(id);
       syncGroupCounts(ctx, id);
