@@ -73,6 +73,14 @@ export class InMemoryGroupStore {
   update(id: string, patch: PatchGroupRequest): GroupResponse {
     const record = this.records.get(id);
     if (!record) throw new ApiError(ErrorCode.NOT_FOUND, `Group ${id} not found.`);
+    if (patch.name !== undefined) {
+      const nameLower = patch.name.toLowerCase();
+      for (const [existingId, r] of this.records) {
+        if (existingId !== id && r.name.toLowerCase() === nameLower) {
+          throw new ApiError(ErrorCode.CONFLICT, `A group named "${patch.name}" already exists.`);
+        }
+      }
+    }
     const updated: GroupRecord = {
       ...record,
       ...(patch.name !== undefined && { name: patch.name }),

@@ -66,6 +66,13 @@ describe('PATCH /api/v1/groups/:id', () => {
     const r = await req('PATCH', '/api/v1/groups/NOPE', { name: 'X' });
     expect(r.status).toBe(404);
   });
+
+  it('returns 409 when renaming to an existing group name', async () => {
+    await req('POST', '/api/v1/groups', { name: 'Dev' });
+    const g2 = await req<{ id: string }>('POST', '/api/v1/groups', { name: 'Staging' });
+    const r = await req('PATCH', `/api/v1/groups/${g2.body.id}`, { name: 'Dev' });
+    expect(r.status).toBe(409);
+  });
 });
 
 describe('DELETE /api/v1/groups/:id', () => {

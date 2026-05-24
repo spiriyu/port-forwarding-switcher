@@ -34,7 +34,7 @@ export const CreateGroupRequestSchema: z.ZodType<CreateGroupRequest> = z.object(
 });
 
 export const PatchGroupRequestSchema: z.ZodType<PatchGroupRequest> = z.object({
-  name: z.string().min(1).optional(),
+  name: z.string().min(1).refine(s => s.trim().length > 0, { message: 'Name cannot be blank' }).optional(),
 });
 
 export const CreateMappingRequestSchema: z.ZodType<CreateMappingRequest> = z.object({

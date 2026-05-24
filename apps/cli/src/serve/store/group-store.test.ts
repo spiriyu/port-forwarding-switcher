@@ -60,6 +60,14 @@ describe('InMemoryGroupStore', () => {
     expect(() => store.update('NOPE', { name: 'X' })).toThrow();
   });
 
+  it('rejects renaming to an existing group name (case-insensitive)', () => {
+    store.hydrate([
+      makeGroup({ id: 'GRP01', name: 'Dev' }),
+      makeGroup({ id: 'GRP02', name: 'Staging' }),
+    ]);
+    expect(() => store.update('GRP01', { name: 'staging' })).toThrow();
+  });
+
   it('deletes a group', () => {
     store.hydrate([makeGroup({ id: 'GRP01', name: 'Dev' })]);
     store.delete('GRP01');
