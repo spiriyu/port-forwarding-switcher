@@ -13,6 +13,7 @@ import {
   type ListGroupsResponse,
   type CreateGroupRequest,
   type PatchGroupRequest,
+  type DuplicateGroupResponse,
 } from '@portswitch/shared';
 
 export const DEFAULT_URL = `http://127.0.0.1:${DEFAULT_DAEMON_PORT}/api`;
@@ -89,6 +90,7 @@ export class DaemonClient {
   deleteGroup(id: string) { return this.req<void>('DELETE', `/v1/groups/${id}`); }
   enableGroup(id: string) { return this.req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/v1/groups/${id}/enable`); }
   disableGroup(id: string) { return this.req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/v1/groups/${id}/disable`); }
+  duplicateGroup(id: string) { return this.req<DuplicateGroupResponse>('POST', `/v1/groups/${id}/duplicate`); }
 
   health() { return this.req<HealthResponse>('GET', '/v1/health'); }
   diagnostics() { return this.req<DiagnosticsResponse>('GET', '/v1/diagnostics'); }
