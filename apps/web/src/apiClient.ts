@@ -1,9 +1,13 @@
 import type {
   HealthResponse,
   ListMappingsResponse,
+  ListGroupsResponse,
+  GroupResponse,
   MappingResponse,
   CreateMappingRequest,
   PatchMappingRequest,
+  CreateGroupRequest,
+  PatchGroupRequest,
 } from '@portswitch/shared';
 
 const BASE = '/api/v1';
@@ -26,6 +30,14 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 export const apiClient = {
   daemon: {
     health: () => req<HealthResponse>('GET', '/health'),
+  },
+  groups: {
+    list: () => req<ListGroupsResponse>('GET', '/groups'),
+    create: (r: CreateGroupRequest) => req<GroupResponse>('POST', '/groups', r),
+    patch: (id: string, r: PatchGroupRequest) => req<GroupResponse>('PATCH', `/groups/${id}`, r),
+    delete: (id: string) => req<void>('DELETE', `/groups/${id}`),
+    enable: (id: string) => req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/groups/${id}/enable`),
+    disable: (id: string) => req<{ group: GroupResponse; mappings: MappingResponse[] }>('POST', `/groups/${id}/disable`),
   },
   mappings: {
     list: () => req<ListMappingsResponse>('GET', '/mappings'),
