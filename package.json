@@ -26,7 +26,8 @@
     "cli:build": "nx run cli:build",
     "cli:copy-ui": "nx run cli:copy-ui",
     "cli:test": "nx run cli:test",
-    "cli": "node dist/apps/cli/main.js"
+    "cli": "node dist/apps/cli/main.js",
+    "e2e": "npx playwright test"
   },
   "dependencies": {
     "chalk": "^4.1.2",
@@ -45,6 +46,7 @@
     "@nx/js": "^19.8.0",
     "@nx/node": "^19.8.0",
     "@nx/vite": "^19.8.0",
+    "@playwright/test": "^1.60.0",
     "@rollup/rollup-linux-x64-gnu": "^4.60.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
