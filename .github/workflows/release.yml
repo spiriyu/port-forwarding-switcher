@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx nx run-many -t lint
+
+      - name: Typecheck
+        run: npx nx run-many -t typecheck
+
+      - name: Test
+        run: npx nx run-many -t test
+
+      - name: Stamp version from tag
+        run: npm pkg set version=${GITHUB_REF_NAME#v} --prefix apps/cli
+
+      - name: Build CLI + Web UI
+        run: npx nx run cli:copy-ui
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        working-directory: dist/apps/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
