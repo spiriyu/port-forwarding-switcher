@@ -1,5 +1,18 @@
 {
   "name": "@portswitch/cli",
   "version": "0.0.1",
-  "private": true
+  "main": "./main.cjs",
+  "bin": {
+    "portswitch": "./main.cjs"
+  },
+  "files": [
+    "main.cjs",
+    "ui"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
