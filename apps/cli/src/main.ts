@@ -5,7 +5,7 @@ import Ws from 'ws';
 import * as nodePath from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const CLI_VERSION: string = (require(nodePath.join(__dirname, '../../../package.json')) as { version: string }).version;
+const CLI_VERSION: string = (require(nodePath.join(__dirname, 'package.json')) as { version: string }).version;
 import {
   DEFAULT_DAEMON_PORT,
   ErrorCode,
