@@ -1,7 +1,6 @@
 {
   "npm": {
-    "publish": false,
-    "pkgFiles": ["apps/cli/package.json"]
+    "publish": false
   },
   "git": {
     "commitMessage": "chore: release v${version}",
@@ -10,5 +9,8 @@
   },
   "github": {
     "release": false
+  },
+  "hooks": {
+    "after:bump": "npm pkg set version=${version} --prefix apps/cli && git add apps/cli/package.json"
   }
 }
