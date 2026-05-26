@@ -19,7 +19,8 @@
     "start": "nx run cli:copy-ui && node dist/apps/cli/main.cjs serve",
     "dev": "nx run web:serve",
     "desktop": "nx run desktop:build && npx electron dist/apps/desktop/main/main.js",
-    "cli": "node dist/apps/cli/main.cjs"
+    "cli": "node dist/apps/cli/main.cjs",
+    "release": "release-it"
   },
   "dependencies": {
     "chalk": "^4.1.2",
@@ -60,6 +61,7 @@
     "jsdom": "^29.1.1",
     "nx": "^19.8.0",
     "prettier": "^3.3.0",
+    "release-it": "^20.0.1",
     "supertest": "^7.0.0",
     "tsup": "^8.3.0",
     "typescript": "~5.5.0",
