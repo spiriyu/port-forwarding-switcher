@@ -5,7 +5,19 @@ import Ws from 'ws';
 import * as nodePath from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const CLI_VERSION: string = (require(nodePath.join(__dirname, 'package.json')) as { version: string }).version;
+const CLI_VERSION: string = (() => {
+  // In the dist bundle __dirname is dist/apps/cli/ (same dir as package.json).
+  // In tests vitest runs from source so __dirname is apps/cli/src/ and
+  // package.json is one level up.
+  for (const p of [nodePath.join(__dirname, 'package.json'), nodePath.join(__dirname, '../package.json')]) {
+    try {
+      return (require(p) as { version?: string }).version ?? '0.0.0';
+    } catch {
+      // try next candidate
+    }
+  }
+  return '0.0.0';
+})();
 import {
   DEFAULT_DAEMON_PORT,
   ErrorCode,
