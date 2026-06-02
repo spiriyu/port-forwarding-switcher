@@ -736,8 +736,8 @@ export function createProgram(): Command {
     const opts = serveCmd.opts() as { port: string };
     const { createDaemon } = await import('./serve/server');
     const port = parseInt(opts.port, 10);
-    // Derive uiDir relative to the running binary, not the compiled source __dirname
-    const uiDir = nodePath.join(nodePath.dirname(process.argv[1] ?? ''), 'ui');
+    // __filename resolves symlinks (e.g. .bin/pfs -> main.cjs), process.argv[1] does not
+    const uiDir = nodePath.join(nodePath.dirname(__filename), 'ui');
     const daemon = createDaemon({ port, uiDir });
 
     process.on('unhandledRejection', (reason) => {
