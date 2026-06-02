@@ -46,7 +46,13 @@ jobs:
         run: cp apps/cli/package.json dist/apps/cli/package.json
 
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          if [[ "$VERSION" == *-* ]]; then
+            npm publish --provenance --access public --tag next
+          else
+            npm publish --provenance --access public
+          fi
         working-directory: dist/apps/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
