@@ -49,9 +49,9 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           if [[ "$VERSION" == *-* ]]; then
-            npm publish --provenance --access public --tag next
+            npm publish --access public --tag next
           else
-            npm publish --provenance --access public
+            npm publish --access public
           fi
         working-directory: dist/apps/cli
         env:

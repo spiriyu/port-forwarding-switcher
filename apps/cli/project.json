@@ -14,7 +14,8 @@
         "tsConfig": "apps/cli/tsconfig.app.json",
         "platform": "node",
         "format": ["cjs"],
-        "bundle": true
+        "bundle": true,
+        "banner": "#!/usr/bin/env node"
       }
     },
     "copy-ui": {

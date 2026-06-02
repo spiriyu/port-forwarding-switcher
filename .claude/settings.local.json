@@ -1,6 +1,9 @@
 {
   "permissions": {
     "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.npmjs.com)",
+      "WebFetch(domain:github.blog)",
       "Bash(npx nx *)"
     ]
   }
