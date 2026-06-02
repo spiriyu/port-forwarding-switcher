@@ -2,25 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryMappingStore } from './mapping-store';
 import { CreateMappingRequest } from '@portswitch/shared';
 
-function makeCreateReq(
-  overrides: Partial<{
-    sourcePort: number;
-    targetPort: number;
-    name: string;
-    enabled: boolean;
-    groupId: string;
-  }> = {},
-): CreateMappingRequest {
-  return {
-    sourcePort: overrides.sourcePort ?? 3000,
-    targetHost: '127.0.0.1',
-    targetPort: overrides.targetPort ?? 8080,
-    name: overrides.name ?? 'test',
-    enabled: overrides.enabled ?? false,
-    groupId: overrides.groupId ?? 'GRP01',
-  };
-}
-
 const BASE: CreateMappingRequest = {
   sourcePort: 8080,
   targetHost: '127.0.0.1',

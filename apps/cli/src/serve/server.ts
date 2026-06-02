@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as http from 'http';
 import * as net from 'net';
 import * as path from 'path';
@@ -214,8 +215,7 @@ export function createDaemon(opts: DaemonOptions = {}): DaemonHandle {
   app.use('/api', apiRouter);
 
   // Serve React UI at /ui (gracefully skip if not built yet)
-  const uiFsModule = require('fs') as typeof import('fs');
-  if (uiFsModule.existsSync(uiDir)) {
+  if (fs.existsSync(uiDir)) {
     app.use('/ui', express.static(uiDir, { index: 'index.html' }));
     app.get('/ui/*', (_req, res) => res.sendFile(path.join(uiDir, 'index.html')));
   } else {

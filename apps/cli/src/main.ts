@@ -3,15 +3,15 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import Ws from 'ws';
 import * as nodePath from 'path';
+import { readFileSync } from 'fs';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CLI_VERSION: string = (() => {
   // In the dist bundle __dirname is dist/apps/cli/ (same dir as package.json).
   // In tests vitest runs from source so __dirname is apps/cli/src/ and
   // package.json is one level up.
   for (const p of [nodePath.join(__dirname, 'package.json'), nodePath.join(__dirname, '../package.json')]) {
     try {
-      return (require(p) as { version?: string }).version ?? '0.0.0';
+      return (JSON.parse(readFileSync(p, 'utf8')) as { version?: string }).version ?? '0.0.0';
     } catch {
       // try next candidate
     }
