@@ -1,6 +1,6 @@
 {
   "name": "port-forwarding-mapper",
-  "version": "0.1.0",
+  "version": "0.0.7",
   "private": true,
   "license": "MIT",
   "engines": {
