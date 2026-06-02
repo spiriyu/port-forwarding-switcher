@@ -5,7 +5,7 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { createDaemon, DaemonHandle } from './server';
-import { ServerMessage } from '@portswitch/shared';
+import { ServerMessage } from '@spiriyu/shared';
 
 let daemon: DaemonHandle;
 let tmpDir: string;

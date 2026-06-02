@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { LogEntry, LogLevel, LogCategory } from '@portswitch/shared';
+import { LogEntry, LogLevel, LogCategory } from '@spiriyu/shared';
 
 export type { LogEntry, LogLevel, LogCategory };
 

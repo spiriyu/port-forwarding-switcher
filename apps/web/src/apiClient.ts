@@ -9,7 +9,7 @@ import type {
   CreateGroupRequest,
   PatchGroupRequest,
   DuplicateGroupResponse,
-} from '@portswitch/shared';
+} from '@spiriyu/shared';
 
 const BASE = '/api/v1';
 const WS_RETRY_MS = 5_000;

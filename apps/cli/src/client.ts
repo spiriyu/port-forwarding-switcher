@@ -14,7 +14,7 @@ import {
   type CreateGroupRequest,
   type PatchGroupRequest,
   type DuplicateGroupResponse,
-} from '@portswitch/shared';
+} from '@spiriyu/shared';
 
 export const DEFAULT_URL = `http://127.0.0.1:${DEFAULT_DAEMON_PORT}/api`;
 

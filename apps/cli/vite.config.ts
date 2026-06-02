@@ -3,9 +3,9 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   resolve: {
     alias: {
-      '@portswitch/shared': new URL('../../libs/shared/src/index.ts', import.meta.url).pathname,
-      '@portswitch/proxy-core': new URL('../../libs/proxy-core/src/index.ts', import.meta.url).pathname,
-      '@portswitch/service-mgr': new URL('../../libs/service-mgr/src/index.ts', import.meta.url).pathname,
+      '@spiriyu/shared': new URL('../../libs/shared/src/index.ts', import.meta.url).pathname,
+      '@spiriyu/proxy-core': new URL('../../libs/proxy-core/src/index.ts', import.meta.url).pathname,
+      '@spiriyu/service-mgr': new URL('../../libs/service-mgr/src/index.ts', import.meta.url).pathname,
     },
   },
   test: {

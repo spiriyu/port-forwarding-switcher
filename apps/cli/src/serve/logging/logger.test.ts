@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { Logger } from './logger';
-import { LogEntry } from '@portswitch/shared';
+import { LogEntry } from '@spiriyu/shared';
 
 let logDir: string;
 let logger: Logger;

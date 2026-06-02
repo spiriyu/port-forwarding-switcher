@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { type MappingResponse, type MappingStatus, type LogEntry } from '@portswitch/shared';
+import { type MappingResponse, type MappingStatus, type LogEntry } from '@spiriyu/shared';
 
 function statusColor(status: MappingStatus): (s: string) => string {
   if (status === 'listening') return chalk.green;

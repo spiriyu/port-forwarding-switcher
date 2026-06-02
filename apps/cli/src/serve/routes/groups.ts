@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { ApiError, ErrorCode, ERROR_HTTP_STATUS, CreateGroupRequestSchema, PatchGroupRequestSchema } from '@portswitch/shared';
+import { ApiError, ErrorCode, ERROR_HTTP_STATUS, CreateGroupRequestSchema, PatchGroupRequestSchema } from '@spiriyu/shared';
 import { DaemonContext } from '../server';
 
 function sendApiError(res: Response, err: unknown): void {

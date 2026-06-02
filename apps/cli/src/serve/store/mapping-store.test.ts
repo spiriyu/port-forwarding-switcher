@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryMappingStore } from './mapping-store';
-import { CreateMappingRequest } from '@portswitch/shared';
+import { CreateMappingRequest } from '@spiriyu/shared';
 
 const BASE: CreateMappingRequest = {
   sourcePort: 8080,

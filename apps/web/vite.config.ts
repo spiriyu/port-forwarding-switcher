@@ -12,7 +12,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@portswitch/shared': resolve(__dirname, '../../libs/shared/src/index.ts'),
+      '@spiriyu/shared': resolve(__dirname, '../../libs/shared/src/index.ts'),
     },
   },
   server: {
