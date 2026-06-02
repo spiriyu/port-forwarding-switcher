@@ -11,12 +11,12 @@ export function resolveLogPath(opts: ResolveLogPathOpts = {}): string {
   const { env = process.env, platform = process.platform, homedir = os.homedir() } = opts;
 
   if (platform === 'darwin') {
-    return path.join(homedir, 'Library', 'Logs', 'portswitch');
+    return path.join(homedir, 'Library', 'Logs', 'pfs');
   }
   if (platform === 'win32') {
     const localAppData = env['LOCALAPPDATA'] ?? path.join(homedir, 'AppData', 'Local');
-    return path.join(localAppData, 'portswitch', 'logs');
+    return path.join(localAppData, 'pfs', 'logs');
   }
   const xdgState = env['XDG_STATE_HOME'] ?? path.join(homedir, '.local', 'state');
-  return path.join(xdgState, 'portswitch', 'logs');
+  return path.join(xdgState, 'pfs', 'logs');
 }

@@ -4,7 +4,7 @@ import * as os from 'os';
 import { spawnSafe, type CmdResult } from '../utils/spawn-safe';
 import { type ServiceManager, type ServiceInstallOptions, type ServiceStatus } from '../interface';
 
-const SERVICE_NAME = 'portswitch';
+const SERVICE_NAME = 'pfs';
 
 function unitPath(): string {
   const configHome = process.env['XDG_CONFIG_HOME'] ?? path.join(os.homedir(), '.config');
@@ -14,7 +14,7 @@ function unitPath(): string {
 export function buildUnit(binaryPath: string): string {
   return [
     '[Unit]',
-    'Description=portswitch daemon',
+    'Description=pfs daemon',
     'After=network.target',
     '',
     '[Service]',

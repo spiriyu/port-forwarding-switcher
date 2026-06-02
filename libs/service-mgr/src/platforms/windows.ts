@@ -1,7 +1,7 @@
 import { spawnSafe, type CmdResult } from '../utils/spawn-safe';
 import { type ServiceManager, type ServiceInstallOptions, type ServiceStatus } from '../interface';
 
-const SERVICE_NAME = 'portswitch';
+const SERVICE_NAME = 'pfs';
 
 export { CmdResult };
 
@@ -27,7 +27,7 @@ export class WindowsServiceManager implements ServiceManager {
       'create', SERVICE_NAME,
       'binPath=', opts.execPath,
       'start=', 'auto',
-      'DisplayName=', 'portswitch daemon',
+      'DisplayName=', 'pfs daemon',
     ]);
     if (code !== 0) throw new Error('sc create failed (exit ' + code + ')');
   }

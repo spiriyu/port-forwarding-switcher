@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import * as http from 'http';
 
-app.setAppUserModelId('com.portswitch.app');
+app.setAppUserModelId('com.pfs.app');
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -49,7 +49,7 @@ function createWindow(): BrowserWindow {
     height: 640,
     minWidth: 600,
     minHeight: 400,
-    title: 'portswitch',
+    title: 'pfs',
     show: false,
     webPreferences: {
       contextIsolation: true,
@@ -82,7 +82,7 @@ function createTray(win: BrowserWindow): Tray {
   const updateMenu = () => {
     const menu = Menu.buildFromTemplate([
       {
-        label: win.isVisible() ? 'Hide portswitch' : 'Show portswitch',
+        label: win.isVisible() ? 'Hide pfs' : 'Show pfs',
         click: () => {
           if (win.isVisible()) { win.hide(); } else { win.show(); win.focus(); }
           updateMenu();
@@ -95,7 +95,7 @@ function createTray(win: BrowserWindow): Tray {
   };
 
   updateMenu();
-  t.setToolTip('portswitch — port-forwarding manager');
+  t.setToolTip('pfs — port-forwarding manager');
   t.on('click', () => {
     if (win.isVisible()) { win.hide(); } else { win.show(); win.focus(); }
     updateMenu();

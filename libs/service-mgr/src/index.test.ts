@@ -70,7 +70,7 @@ describe('MockServiceManager lifecycle', () => {
 
 describe('buildPlist', () => {
   it('contains the label', () => {
-    expect(buildPlist('/usr/local/bin/daemon')).toContain('com.portswitch.daemon');
+    expect(buildPlist('/usr/local/bin/daemon')).toContain('com.pfs.daemon');
   });
 
   it('contains the exec path', () => {
@@ -104,7 +104,7 @@ describe('LaunchdServiceManager', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'portswitch-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pfs-test-'));
     vi.stubEnv('HOME', tmpDir);
   });
 
@@ -120,8 +120,8 @@ describe('LaunchdServiceManager', () => {
 
     await mgr.install({ execPath: '/usr/local/bin/daemon' });
 
-    const content = await fs.readFile(path.join(plistDir, 'com.portswitch.daemon.plist'), 'utf-8');
-    expect(content).toContain('com.portswitch.daemon');
+    const content = await fs.readFile(path.join(plistDir, 'com.pfs.daemon.plist'), 'utf-8');
+    expect(content).toContain('com.pfs.daemon');
     expect(content).toContain('/usr/local/bin/daemon');
 
     const calls = runner.mock.calls.map(([cmd, args]) => [cmd, ...(args as string[])].join(' '));
@@ -142,7 +142,7 @@ describe('LaunchdServiceManager', () => {
   it('status returns running when launchctl list exits 0 with PID', async () => {
     const plistDir = path.join(tmpDir, 'Library', 'LaunchAgents');
     await fs.mkdir(plistDir, { recursive: true });
-    await fs.writeFile(path.join(plistDir, 'com.portswitch.daemon.plist'), '', 'utf-8');
+    await fs.writeFile(path.join(plistDir, 'com.pfs.daemon.plist'), '', 'utf-8');
 
     const runner = vi.fn(async (): Promise<CmdResult> => ({
       stdout: '{ "PID" = 999; }',
@@ -158,7 +158,7 @@ describe('LaunchdServiceManager', () => {
 
   it('uninstall removes plist file', async () => {
     const plistDir = path.join(tmpDir, 'Library', 'LaunchAgents');
-    const plistFile = path.join(plistDir, 'com.portswitch.daemon.plist');
+    const plistFile = path.join(plistDir, 'com.pfs.daemon.plist');
     await fs.mkdir(plistDir, { recursive: true });
     await fs.writeFile(plistFile, 'content', 'utf-8');
 
@@ -177,7 +177,7 @@ describe('SystemdServiceManager', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'portswitch-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pfs-test-'));
     vi.stubEnv('XDG_CONFIG_HOME', path.join(tmpDir, '.config'));
   });
 
@@ -193,7 +193,7 @@ describe('SystemdServiceManager', () => {
 
     await mgr.install({ execPath: '/usr/local/bin/daemon' });
 
-    const unitFile = path.join(tmpDir, '.config', 'systemd', 'user', 'portswitch.service');
+    const unitFile = path.join(tmpDir, '.config', 'systemd', 'user', 'pfs.service');
     const content = await fs.readFile(unitFile, 'utf-8');
     expect(content).toContain('ExecStart=/usr/local/bin/daemon');
 
@@ -206,7 +206,7 @@ describe('SystemdServiceManager', () => {
       stdout: 'ActiveState=active\nMainPID=5678\n',
       code: 0,
     }));
-    const unitFile = path.join(tmpDir, '.config', 'systemd', 'user', 'portswitch.service');
+    const unitFile = path.join(tmpDir, '.config', 'systemd', 'user', 'pfs.service');
     await fs.mkdir(path.dirname(unitFile), { recursive: true });
     await fs.writeFile(unitFile, '', 'utf-8');
 

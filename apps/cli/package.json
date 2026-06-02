@@ -3,7 +3,7 @@
   "version": "0.0.5-1",
   "main": "./main.cjs",
   "bin": {
-    "portswitch": "./main.cjs"
+    "pfs": "./main.cjs"
   },
   "files": [
     "main.cjs",

@@ -28,7 +28,7 @@ describe('resolveConfigPath', () => {
 
   it('macOS: returns Library/Application Support path', () => {
     expect(resolveConfigPath({ platform: 'darwin', homedir: HOME })).toBe(
-      path.join(HOME, 'Library', 'Application Support', 'portswitch', 'config.json'),
+      path.join(HOME, 'Library', 'Application Support', 'pfs', 'config.json'),
     );
   });
 
@@ -39,12 +39,12 @@ describe('resolveConfigPath', () => {
         homedir: HOME,
         env: { APPDATA: 'C:\\Users\\test\\AppData\\Roaming' },
       }),
-    ).toBe(path.join('C:\\Users\\test\\AppData\\Roaming', 'portswitch', 'config.json'));
+    ).toBe(path.join('C:\\Users\\test\\AppData\\Roaming', 'pfs', 'config.json'));
   });
 
   it('Windows: falls back to homedir/AppData/Roaming when APPDATA unset', () => {
     expect(resolveConfigPath({ platform: 'win32', homedir: HOME, env: {} })).toBe(
-      path.join(HOME, 'AppData', 'Roaming', 'portswitch', 'config.json'),
+      path.join(HOME, 'AppData', 'Roaming', 'pfs', 'config.json'),
     );
   });
 
@@ -55,12 +55,12 @@ describe('resolveConfigPath', () => {
         homedir: HOME,
         env: { XDG_CONFIG_HOME: '/xdg/config' },
       }),
-    ).toBe(path.join('/xdg/config', 'portswitch', 'config.json'));
+    ).toBe(path.join('/xdg/config', 'pfs', 'config.json'));
   });
 
   it('Linux: falls back to ~/.config when XDG_CONFIG_HOME unset', () => {
     expect(resolveConfigPath({ platform: 'linux', homedir: HOME, env: {} })).toBe(
-      path.join(HOME, '.config', 'portswitch', 'config.json'),
+      path.join(HOME, '.config', 'pfs', 'config.json'),
     );
   });
 });
@@ -68,7 +68,7 @@ describe('resolveConfigPath', () => {
 describe('resolveLogPath', () => {
   it('macOS: returns Library/Logs path', () => {
     expect(resolveLogPath({ platform: 'darwin', homedir: HOME })).toBe(
-      path.join(HOME, 'Library', 'Logs', 'portswitch'),
+      path.join(HOME, 'Library', 'Logs', 'pfs'),
     );
   });
 
@@ -79,12 +79,12 @@ describe('resolveLogPath', () => {
         homedir: HOME,
         env: { LOCALAPPDATA: 'C:\\Users\\test\\AppData\\Local' },
       }),
-    ).toBe(path.join('C:\\Users\\test\\AppData\\Local', 'portswitch', 'logs'));
+    ).toBe(path.join('C:\\Users\\test\\AppData\\Local', 'pfs', 'logs'));
   });
 
   it('Windows: falls back to homedir/AppData/Local when LOCALAPPDATA unset', () => {
     expect(resolveLogPath({ platform: 'win32', homedir: HOME, env: {} })).toBe(
-      path.join(HOME, 'AppData', 'Local', 'portswitch', 'logs'),
+      path.join(HOME, 'AppData', 'Local', 'pfs', 'logs'),
     );
   });
 
@@ -95,12 +95,12 @@ describe('resolveLogPath', () => {
         homedir: HOME,
         env: { XDG_STATE_HOME: '/xdg/state' },
       }),
-    ).toBe(path.join('/xdg/state', 'portswitch', 'logs'));
+    ).toBe(path.join('/xdg/state', 'pfs', 'logs'));
   });
 
   it('Linux: falls back to ~/.local/state when XDG_STATE_HOME unset', () => {
     expect(resolveLogPath({ platform: 'linux', homedir: HOME, env: {} })).toBe(
-      path.join(HOME, '.local', 'state', 'portswitch', 'logs'),
+      path.join(HOME, '.local', 'state', 'pfs', 'logs'),
     );
   });
 });

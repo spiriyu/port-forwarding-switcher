@@ -4,7 +4,7 @@ import * as os from 'os';
 import { spawnSafe, type CmdResult } from '../utils/spawn-safe';
 import { type ServiceManager, type ServiceInstallOptions, type ServiceStatus } from '../interface';
 
-const LABEL = 'com.portswitch.daemon';
+const LABEL = 'com.pfs.daemon';
 
 function plistPath(): string {
   const home = process.env['HOME'] ?? os.homedir();
@@ -22,8 +22,8 @@ export function buildPlist(execPath: string): string {
     `  <array><string>${execPath}</string></array>`,
     `  <key>RunAtLoad</key><true/>`,
     `  <key>KeepAlive</key><true/>`,
-    `  <key>StandardOutPath</key><string>/tmp/portswitch-daemon.log</string>`,
-    `  <key>StandardErrorPath</key><string>/tmp/portswitch-daemon.log</string>`,
+    `  <key>StandardOutPath</key><string>/tmp/pfs-daemon.log</string>`,
+    `  <key>StandardErrorPath</key><string>/tmp/pfs-daemon.log</string>`,
     '</dict>',
     '</plist>',
   ].join('\n');

@@ -199,27 +199,27 @@ function generateCompletion(shell: string): string {
   ];
   if (shell === 'bash') {
     return [
-      '_portswitch_completion() {',
+      '_pfs_completion() {',
       '  local cur="${COMP_WORDS[COMP_CWORD]}"',
       `  local cmds="${cmds.join(' ')}"`,
       '  COMPREPLY=($(compgen -W "$cmds" -- "$cur"))',
       '}',
-      'complete -F _portswitch_completion portswitch',
+      'complete -F _pfs_completion pfs',
     ].join('\n');
   }
   if (shell === 'zsh') {
     return [
-      '#compdef portswitch',
-      '_portswitch() {',
+      '#compdef pfs',
+      '_pfs() {',
       `  local -a cmds=(${cmds.map((c) => `'${c}'`).join(' ')})`,
       '  _describe "command" cmds',
       '}',
-      '_portswitch',
+      '_pfs',
     ].join('\n');
   }
   if (shell === 'fish') {
     return cmds
-      .map((c) => `complete -c portswitch -f -n '__fish_use_subcommand' -a '${c}'`)
+      .map((c) => `complete -c pfs -f -n '__fish_use_subcommand' -a '${c}'`)
       .join('\n');
   }
   return '';
@@ -231,7 +231,7 @@ export function createProgram(): Command {
   const program = new Command();
 
   program
-    .name('portswitch')
+    .name('pfs')
     .description('Host port-forwarding manager')
     .version(CLI_VERSION)
     .option('--url <url>', 'daemon base URL', `http://127.0.0.1:${DEFAULT_DAEMON_PORT}`)
@@ -278,7 +278,7 @@ export function createProgram(): Command {
       } else {
         const { groups } = await c.listGroups();
         if (groups.length === 0) {
-          console.error(chalk.red('Error:'), 'No groups exist. Create one with: portswitch group add --name <name>');
+          console.error(chalk.red('Error:'), 'No groups exist. Create one with: pfs group add --name <name>');
           process.exit(ExitCode.DAEMON_ERROR);
         }
         if (groups.length > 1) {
@@ -458,7 +458,7 @@ export function createProgram(): Command {
             console.log(toJson(groups));
           } else {
             if (groups.length === 0) {
-              console.log(chalk.dim('No groups. Use: portswitch group add --name <name>'));
+              console.log(chalk.dim('No groups. Use: pfs group add --name <name>'));
             } else {
               console.log(chalk.bold('ID'.padEnd(28)) + chalk.bold('NAME'.padEnd(24)) + chalk.bold('MAPPINGS') + '  ' + chalk.bold('ACTIVE'));
               for (const g of groups) {
@@ -682,7 +682,7 @@ export function createProgram(): Command {
           }
           await mgr.install({ execPath: opts.exec, dryRun: opts.dryRun });
           if (!opts.dryRun) {
-            console.log(chalk.green('Service installed.'), chalk.dim('Run: portswitch service start'));
+            console.log(chalk.green('Service installed.'), chalk.dim('Run: pfs service start'));
           }
           break;
         }
@@ -729,7 +729,7 @@ export function createProgram(): Command {
   // serve — start daemon + static UI server
   const serveCmd = program
     .command('serve')
-    .description('Start the portswitch daemon and web UI server')
+    .description('Start the pfs daemon and web UI server')
     .option('-p, --port <port>', 'port to listen on', String(DEFAULT_DAEMON_PORT));
 
   serveCmd.action(async () => {
@@ -750,7 +750,7 @@ export function createProgram(): Command {
     });
 
     await daemon.start();
-    console.log(`portswitch daemon listening on http://127.0.0.1:${daemon.port}/api`);
+    console.log(`pfs daemon listening on http://127.0.0.1:${daemon.port}/api`);
     console.log(`web UI available at http://127.0.0.1:${daemon.port}/ui`);
     console.log(`config: ${daemon.configPath}`);
 

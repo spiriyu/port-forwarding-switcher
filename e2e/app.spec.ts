@@ -63,9 +63,9 @@ test.describe('Web UI', () => {
     await expect(page.locator('#root')).not.toBeEmpty({ timeout: 10_000 });
   });
 
-  test('page title is portswitch', async ({ page }) => {
+  test('page title is pfs', async ({ page }) => {
     await page.goto(`${BASE}/ui`);
-    await expect(page).toHaveTitle(/portswitch/i);
+    await expect(page).toHaveTitle(/pfs/i);
   });
 
   test('mapping list section is visible', async ({ page }) => {

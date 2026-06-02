@@ -17,12 +17,12 @@ export function resolveConfigPath(opts: ResolveConfigPathOpts = {}): string {
   if (envConfig) return envConfig;
 
   if (platform === 'darwin') {
-    return path.join(homedir, 'Library', 'Application Support', 'portswitch', 'config.json');
+    return path.join(homedir, 'Library', 'Application Support', 'pfs', 'config.json');
   }
   if (platform === 'win32') {
     const appdata = env['APPDATA'] ?? path.join(homedir, 'AppData', 'Roaming');
-    return path.join(appdata, 'portswitch', 'config.json');
+    return path.join(appdata, 'pfs', 'config.json');
   }
   const xdgConfig = env['XDG_CONFIG_HOME'] ?? path.join(homedir, '.config');
-  return path.join(xdgConfig, 'portswitch', 'config.json');
+  return path.join(xdgConfig, 'pfs', 'config.json');
 }

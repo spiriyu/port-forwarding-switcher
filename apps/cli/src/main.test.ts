@@ -186,9 +186,9 @@ describe('toJson', () => {
 // ── createProgram ────────────────────────────────────────────────────────────
 
 describe('createProgram', () => {
-  it('creates a Command with name portswitch', () => {
+  it('creates a Command with name pfs', () => {
     const program = createProgram();
-    expect(program.name()).toBe('portswitch');
+    expect(program.name()).toBe('pfs');
   });
 
   it('registers expected commands', () => {
