@@ -1,6 +1,6 @@
 {
   "name": "@port-forwarding-switcher/cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "./main.cjs",
   "bin": {
     "portswitch": "./main.cjs"
