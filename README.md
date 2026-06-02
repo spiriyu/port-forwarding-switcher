@@ -2,8 +2,8 @@
 
 [![npm](https://img.shields.io/npm/v/@spiriyu/port-forwarding-mapper)](https://www.npmjs.com/package/@spiriyu/port-forwarding-mapper)
 [![node](https://img.shields.io/node/v/@spiriyu/port-forwarding-mapper)](https://nodejs.org)
-[![license](https://img.shields.io/npm/l/@spiriyu/port-forwarding-mapper)](./LICENSE)
-[![Release](https://github.com/spiriyu/port-forwarding-switcher/actions/workflows/release.yml/badge.svg)](https://github.com/spiriyu/port-forwarding-switcher/actions)
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Release](https://img.shields.io/github/actions/workflow/status/spiriyu/port-forwarding-switcher/release.yml?label=Release)](https://github.com/spiriyu/port-forwarding-switcher/actions/workflows/release.yml)
 
 A host-local TCP port-forwarding manager. One long-running daemon owns all the listeners; a web UI, desktop app, and CLI drive it interactively — all staying in sync in real time.
 
@@ -32,6 +32,12 @@ npx @spiriyu/port-forwarding-mapper serve                 # default port 65432
 npx @spiriyu/port-forwarding-mapper serve --port 8888     # custom port
 npx @spiriyu/port-forwarding-mapper add 8080 localhost:3000 --name dev-api
 npx @spiriyu/port-forwarding-mapper list
+```
+
+If you prefer a shorter alias without a global install, add this to your shell profile:
+
+```bash
+alias pfs='npx @spiriyu/port-forwarding-mapper'
 ```
 
 ## Quickstart
@@ -134,8 +140,9 @@ Shell completion:
   completion <shell>             Print completion script (bash|zsh|fish)
 
 Global flags:
-  --url <url>   Daemon base URL (default: http://127.0.0.1:65432)
-  --json        Output machine-readable JSON
+  -v, --version  Output the version number
+  --url <url>    Daemon base URL (default: http://127.0.0.1:65432)
+  --json         Output machine-readable JSON
 ```
 
 ## Privileged ports

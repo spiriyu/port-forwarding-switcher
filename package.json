@@ -2,6 +2,7 @@
   "name": "port-forwarding-mapper",
   "version": "0.0.7",
   "private": true,
+  "license": "MIT",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"

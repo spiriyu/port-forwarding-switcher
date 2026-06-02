@@ -233,7 +233,7 @@ export function createProgram(): Command {
   program
     .name('pfs')
     .description('Host port-forwarding manager')
-    .version(CLI_VERSION)
+    .version(CLI_VERSION, '-v, --version', 'output the version number')
     .option('--url <url>', 'daemon base URL', `http://127.0.0.1:${DEFAULT_DAEMON_PORT}`)
     .option('--json', 'output as JSON');
 
