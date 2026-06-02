@@ -1,5 +1,5 @@
 {
-  "name": "@portswitch/cli",
+  "name": "@port-forwarding-switcher/cli",
   "version": "0.0.1",
   "main": "./main.cjs",
   "bin": {
