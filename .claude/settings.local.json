@@ -4,7 +4,8 @@
       "WebSearch",
       "WebFetch(domain:docs.npmjs.com)",
       "WebFetch(domain:github.blog)",
-      "Bash(npx nx *)"
+      "Bash(npx nx *)",
+      "WebFetch(domain:www.npmjs.com)"
     ]
   }
 }

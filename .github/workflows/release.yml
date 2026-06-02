@@ -22,7 +22,6 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -42,8 +41,10 @@ jobs:
       - name: Build CLI + Web UI
         run: npx nx run cli:copy-ui
 
-      - name: Copy package.json to dist
-        run: cp apps/cli/package.json dist/apps/cli/package.json
+      - name: Copy package.json and README to dist
+        run: |
+          cp apps/cli/package.json dist/apps/cli/package.json
+          cp README.md dist/apps/cli/README.md
 
       - name: Publish to npm
         run: |
@@ -54,5 +55,3 @@ jobs:
             npm publish --access public
           fi
         working-directory: dist/apps/cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
