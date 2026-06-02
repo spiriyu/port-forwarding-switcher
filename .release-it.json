@@ -16,7 +16,7 @@
     "release": false
   },
   "hooks": {
-    "before:init": "npm run lint && npm run typecheck && npm test",
+    "before:init": "npx nx run cli:lint && npx nx run cli:typecheck && npx nx run cli:test",
     "after:bump": "npm pkg set version=${version} --prefix apps/cli && git add apps/cli/package.json"
   }
 }
