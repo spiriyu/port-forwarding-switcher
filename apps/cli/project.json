@@ -15,7 +15,8 @@
         "platform": "node",
         "format": ["cjs"],
         "bundle": true,
-        "banner": "#!/usr/bin/env node"
+        "banner": "#!/usr/bin/env node",
+        "thirdParty": true
       }
     },
     "copy-ui": {
