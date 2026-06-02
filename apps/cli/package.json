@@ -1,6 +1,6 @@
 {
   "name": "@spiriyu/port-forwarding-mapper",
-  "version": "0.0.4",
+  "version": "0.0.5-0",
   "main": "./main.cjs",
   "bin": {
     "portswitch": "./main.cjs"
