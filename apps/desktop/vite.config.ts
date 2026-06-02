@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@spiriyu/shared': new URL('../../libs/shared/src/index.ts', import.meta.url).pathname,
+      '@portswitch/shared': new URL('../../libs/shared/src/index.ts', import.meta.url).pathname,
     },
   },
   test: {

@@ -6,8 +6,8 @@ import {
   CreateMappingRequestSchema,
   PatchMappingRequestSchema,
   BulkRequestSchema,
-} from '@spiriyu/shared';
-import { MappingResponse } from '@spiriyu/shared';
+} from '@portswitch/shared';
+import { MappingResponse } from '@portswitch/shared';
 import { DaemonContext } from '../server';
 
 function sendApiError(res: Response, err: unknown): void {

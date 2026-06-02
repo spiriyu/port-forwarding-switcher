@@ -24,8 +24,8 @@ import {
   type ServerMessage,
   type LogEntry,
   type PatchMappingRequest,
-} from '@spiriyu/shared';
-import { createServiceManager } from '@spiriyu/service-mgr';
+} from '@portswitch/shared';
+import { createServiceManager } from '@portswitch/service-mgr';
 import { DaemonClient, DaemonUnreachableError, DaemonApiError } from './client';
 import { formatMappingsTable, formatMapping, formatLogEntry, toJson } from './output';
 import { resolveId } from './resolve';

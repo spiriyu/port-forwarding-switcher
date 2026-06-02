@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import * as fs from 'fs/promises';
-import { LogEntry } from '@spiriyu/shared';
+import { LogEntry } from '@portswitch/shared';
 import { Logger } from '../logging/logger';
 import { DaemonContext } from '../server';
 

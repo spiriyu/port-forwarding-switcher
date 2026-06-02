@@ -6,7 +6,7 @@ import {
   parsePortswitchConfig,
   runMigrations,
   DEFAULT_CONFIG,
-} from '@spiriyu/shared';
+} from '@portswitch/shared';
 
 export async function loadConfig(configPath: string): Promise<PortswitchConfig> {
   try {

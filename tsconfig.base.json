@@ -15,9 +15,9 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@spiriyu/shared": ["libs/shared/src/index.ts"],
-      "@spiriyu/proxy-core": ["libs/proxy-core/src/index.ts"],
-      "@spiriyu/service-mgr": ["libs/service-mgr/src/index.ts"]
+      "@portswitch/shared": ["libs/shared/src/index.ts"],
+      "@portswitch/proxy-core": ["libs/proxy-core/src/index.ts"],
+      "@portswitch/service-mgr": ["libs/service-mgr/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist"]

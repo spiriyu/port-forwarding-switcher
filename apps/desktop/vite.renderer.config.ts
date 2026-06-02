@@ -8,7 +8,7 @@ export default defineConfig({
   base: './',
   resolve: {
     alias: {
-      '@spiriyu/shared': resolve(__dirname, '../../libs/shared/src/index.ts'),
+      '@portswitch/shared': resolve(__dirname, '../../libs/shared/src/index.ts'),
     },
   },
   build: {

@@ -1,6 +1,6 @@
 import { ulid } from 'ulid';
-import { GroupConfig, GroupResponse, CreateGroupRequest, PatchGroupRequest } from '@spiriyu/shared';
-import { ApiError, ErrorCode } from '@spiriyu/shared';
+import { GroupConfig, GroupResponse, CreateGroupRequest, PatchGroupRequest } from '@portswitch/shared';
+import { ApiError, ErrorCode } from '@portswitch/shared';
 
 interface GroupRecord {
   id: string;

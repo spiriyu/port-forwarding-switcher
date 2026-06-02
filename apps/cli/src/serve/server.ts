@@ -23,8 +23,8 @@ import {
   CURRENT_SCHEMA_VERSION,
   DEFAULT_DAEMON_PORT,
   ErrorCode,
-} from '@spiriyu/shared';
-import { createForwarder, ForwarderHandle } from '@spiriyu/proxy-core';
+} from '@portswitch/shared';
+import { createForwarder, ForwarderHandle } from '@portswitch/proxy-core';
 import { InMemoryMappingStore } from './store/mapping-store';
 import { InMemoryGroupStore } from './store/group-store';
 import { EventBus } from './ws/event-bus';
@@ -48,7 +48,7 @@ export interface DaemonContext {
   persist: () => void;
   startForwarding(id: string): Promise<void>;
   stopForwarding(id: string): Promise<void>;
-  liveStats(id: string): import('@spiriyu/proxy-core').ForwarderStats | undefined;
+  liveStats(id: string): import('@portswitch/proxy-core').ForwarderStats | undefined;
 }
 
 export interface DaemonOptions {

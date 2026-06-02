@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { ServerMessage, ClientMessage, LogSubscribePayload, MappingResponse, GroupResponse, LogEntry, LogLevel, LogCategory, LogSubscribePayloadSchema } from '@spiriyu/shared';
+import { ServerMessage, ClientMessage, LogSubscribePayload, MappingResponse, GroupResponse, LogEntry, LogLevel, LogCategory, LogSubscribePayloadSchema } from '@portswitch/shared';
 
 const LOG_DROP_BUFFER = 500;
 const LOG_DROP_BYTES = 256 * 1024;

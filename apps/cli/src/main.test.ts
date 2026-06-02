@@ -3,7 +3,7 @@ import { DaemonClient, DaemonUnreachableError, DaemonApiError } from './client';
 import { resolveId } from './resolve';
 import { formatMappingsTable, formatLogEntry, toJson } from './output';
 import { parseAddress, createProgram } from './main';
-import { ErrorCode, type MappingResponse, type LogEntry } from '@spiriyu/shared';
+import { ErrorCode, type MappingResponse, type LogEntry } from '@portswitch/shared';
 
 // ── parseAddress ─────────────────────────────────────────────────────────────
 

@@ -11,7 +11,7 @@ import {
   ApiError,
   ApiErrorBody,
   ErrorCode,
-} from '@spiriyu/shared';
+} from '@portswitch/shared';
 
 interface MappingRecord {
   id: string;
