@@ -10,8 +10,11 @@ import type {
 import { StatusBar } from './components/StatusBar';
 import { MappingList } from './components/MappingList';
 import { AddMappingDialog, type MappingDialogValues } from './components/AddMappingDialog';
+import { ConflictModal } from './components/ConflictModal';
 import { useColorScheme } from './theme';
 import { apiClient } from './apiClient';
+import { useConflictMode } from './hooks/useConflictMode';
+import { detectGroupConflicts, detectMappingConflicts } from './conflicts';
 
 const layout: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', height: '100vh',
@@ -56,6 +59,9 @@ export default function App(): React.ReactElement {
   const [newGroupName, setNewGroupName] = useState('');
   const [editing, setEditing] = useState<MappingResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [conflictMode, setConflictMode] = useConflictMode();
+  const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
+  const [conflictingMappings, setConflictingMappings] = useState<MappingResponse[]>([]);
 
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -104,15 +110,52 @@ export default function App(): React.ReactElement {
     };
   }, [refreshHealth, refreshAll]);
 
+  const coreEnableGroup = async (id: string): Promise<void> => {
+    const result = await apiClient.groups.enable(id);
+    setGroups((prev) => prev.map((g) => (g.id === id ? result.group : g)));
+    setMappings((prev) => {
+      const updatedIds = new Set(result.mappings.map((m) => m.id));
+      return prev.map((m) => (updatedIds.has(m.id) ? (result.mappings.find((u) => u.id === m.id) ?? m) : m));
+    });
+  };
+
+  const resolveConflictsAndProceed = async (
+    conflicts: MappingResponse[],
+    proceed: () => Promise<void>,
+  ): Promise<void> => {
+    const disabled: MappingResponse[] = [];
+    for (const conflict of conflicts) {
+      const updated = await apiClient.mappings.patch(conflict.id, { enabled: false });
+      disabled.push(updated);
+    }
+    setMappings((prev) => {
+      const byId = new Map(disabled.map((m) => [m.id, m]));
+      const next = prev.map((m) => byId.get(m.id) ?? m);
+      setGroups((gs) =>
+        gs.map((g) => {
+          if (!disabled.some((m) => m.groupId === g.id)) return g;
+          return { ...g, activeCount: next.filter((m) => m.groupId === g.id && m.enabled).length };
+        }),
+      );
+      return next;
+    });
+    await proceed();
+  };
+
   const handleEnableGroup = async (id: string): Promise<void> => {
-    try {
-      const result = await apiClient.groups.enable(id);
-      setGroups((prev) => prev.map((g) => (g.id === id ? result.group : g)));
-      setMappings((prev) => {
-        const updatedIds = new Set(result.mappings.map((m) => m.id));
-        return prev.map((m) => (updatedIds.has(m.id) ? (result.mappings.find((u) => u.id === m.id) ?? m) : m));
-      });
-    } catch (err) { setError(errorMessage(err)); }
+    const conflicts = detectGroupConflicts(id, mappings);
+    if (conflicts.length > 0) {
+      if (conflictMode === 'auto') {
+        try { await resolveConflictsAndProceed(conflicts, () => coreEnableGroup(id)); }
+        catch (err) { setError(errorMessage(err)); }
+        return;
+      }
+      setConflictingMappings(conflicts);
+      setPendingAction(() => async () => resolveConflictsAndProceed(conflicts, () => coreEnableGroup(id)));
+      return;
+    }
+    try { await coreEnableGroup(id); }
+    catch (err) { setError(errorMessage(err)); }
   };
 
   const handleDisableGroup = async (id: string): Promise<void> => {
@@ -160,18 +203,50 @@ export default function App(): React.ReactElement {
     } catch (err) { setError(errorMessage(err)); }
   };
 
+  const coreToggleMapping = async (id: string): Promise<void> => {
+    const updated = await apiClient.mappings.toggle(id);
+    setMappings((prev) => {
+      const next = prev.map((m) => (m.id === id ? updated : m));
+      setGroups((gs) => gs.map((g) => {
+        if (g.id !== updated.groupId) return g;
+        return { ...g, activeCount: next.filter((m) => m.groupId === g.id && m.enabled).length };
+      }));
+      return next;
+    });
+  };
+
   const handleToggleMapping = async (id: string): Promise<void> => {
-    try {
-      const updated = await apiClient.mappings.toggle(id);
-      setMappings((prev) => {
-        const next = prev.map((m) => (m.id === id ? updated : m));
-        setGroups((gs) => gs.map((g) => {
-          if (g.id !== updated.groupId) return g;
-          return { ...g, activeCount: next.filter((m) => m.groupId === g.id && m.enabled).length };
-        }));
-        return next;
-      });
-    } catch (err) { setError(errorMessage(err)); }
+    const mapping = mappings.find((m) => m.id === id);
+    if (mapping && !mapping.enabled) {
+      const conflicts = detectMappingConflicts(id, mappings);
+      if (conflicts.length > 0) {
+        if (conflictMode === 'auto') {
+          try { await resolveConflictsAndProceed(conflicts, () => coreToggleMapping(id)); }
+          catch (err) { setError(errorMessage(err)); }
+          return;
+        }
+        setConflictingMappings(conflicts);
+        setPendingAction(() => async () => resolveConflictsAndProceed(conflicts, () => coreToggleMapping(id)));
+        return;
+      }
+    }
+    try { await coreToggleMapping(id); }
+    catch (err) { setError(errorMessage(err)); }
+  };
+
+  const handleConflictConfirm = async (): Promise<void> => {
+    const action = pendingAction;
+    setPendingAction(null);
+    setConflictingMappings([]);
+    if (action) {
+      try { await action(); }
+      catch (err) { setError(errorMessage(err)); }
+    }
+  };
+
+  const handleConflictCancel = (): void => {
+    setPendingAction(null);
+    setConflictingMappings([]);
   };
 
   const handleDeleteMapping = async (id: string): Promise<void> => {
@@ -222,7 +297,7 @@ export default function App(): React.ReactElement {
 
   return (
     <div style={layout}>
-      <StatusBar health={health} loading={healthLoading} />
+      <StatusBar health={health} loading={healthLoading} conflictMode={conflictMode} onConflictModeChange={setConflictMode} />
       {error && (
         <div style={toast} role="alert">
           <span>{error}</span>
@@ -277,6 +352,14 @@ export default function App(): React.ReactElement {
           initial={editing}
           onConfirm={(values) => void handleEditSave(values)}
           onCancel={() => setEditing(null)}
+        />
+      )}
+      {pendingAction && (
+        <ConflictModal
+          conflictingMappings={conflictingMappings}
+          groups={groups}
+          onConfirm={() => void handleConflictConfirm()}
+          onCancel={handleConflictCancel}
         />
       )}
     </div>

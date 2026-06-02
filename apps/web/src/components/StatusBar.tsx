@@ -1,9 +1,12 @@
 import React from 'react';
 import type { HealthResponse } from '@portswitch/shared';
+import type { ConflictMode } from '../hooks/useConflictMode';
 
 interface Props {
   health: HealthResponse | null;
   loading: boolean;
+  conflictMode: ConflictMode;
+  onConflictModeChange: (m: ConflictMode) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -30,7 +33,35 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '3px',
     fontFamily: 'ui-monospace, monospace',
   },
+  pill: {
+    display: 'flex',
+    borderRadius: '4px',
+    overflow: 'hidden',
+    border: '1px solid var(--border-strong)',
+    marginLeft: 'auto',
+  },
 };
+
+function pillHalf(active: boolean): React.CSSProperties {
+  return {
+    padding: '2px 10px',
+    fontSize: '11px',
+    cursor: 'pointer',
+    border: 'none',
+    background: active ? 'var(--accent)' : 'transparent',
+    color: active ? '#fff' : 'var(--text-muted)',
+    transition: 'background 0.15s, color 0.15s',
+  };
+}
+
+function PillToggle({ mode, onChange }: { mode: ConflictMode; onChange: (m: ConflictMode) => void }): React.ReactElement {
+  return (
+    <div style={styles.pill} title="Conflict resolution mode">
+      <button style={pillHalf(mode === 'validate')} onClick={() => onChange('validate')}>Validate</button>
+      <button style={pillHalf(mode === 'auto')} onClick={() => onChange('auto')}>Auto</button>
+    </div>
+  );
+}
 
 export function formatDuration(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -43,12 +74,13 @@ export function formatDuration(ms: number): string {
   return `${d}d ${h % 24}h`;
 }
 
-export function StatusBar({ health, loading }: Props): React.ReactElement {
+export function StatusBar({ health, loading, conflictMode, onConflictModeChange }: Props): React.ReactElement {
   if (loading) {
     return (
       <div style={styles.bar}>
         <span style={{ ...styles.dot, background: 'var(--text-muted)' }} />
         <span>Connecting to daemon…</span>
+        <PillToggle mode={conflictMode} onChange={onConflictModeChange} />
       </div>
     );
   }
@@ -59,6 +91,7 @@ export function StatusBar({ health, loading }: Props): React.ReactElement {
         <span style={{ ...styles.dot, background: 'var(--danger)' }} />
         <span>Daemon unreachable — start it with:</span>
         <code style={styles.code}>portswitch service start</code>
+        <PillToggle mode={conflictMode} onChange={onConflictModeChange} />
       </div>
     );
   }
@@ -69,6 +102,7 @@ export function StatusBar({ health, loading }: Props): React.ReactElement {
       <span>
         Daemon v{health.version} · uptime {formatDuration(health.uptimeMs)}
       </span>
+      <PillToggle mode={conflictMode} onChange={onConflictModeChange} />
     </div>
   );
 }
